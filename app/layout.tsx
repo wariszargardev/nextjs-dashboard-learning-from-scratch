@@ -36,6 +36,9 @@ export default function RootLayout({
           <li>
             <Link href = '/post' >Post</Link>
           </li>
+          <li>
+            <Link href = '/category' >Category</Link>
+          </li>
         </ul>
         {children}
       </body>

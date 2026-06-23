@@ -1,8 +1,10 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Next.js Dashboard — Learning from Scratch
+
+A [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+
+---
 
 ## Getting Started
-
-First, run the development server:
 
 ```bash
 npm run dev
@@ -10,117 +12,143 @@ npm run dev
 yarn dev
 # or
 pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000) to view the app.
 
-Routing Files
-Add page to expose a route, layout for shared UI such as header, nav, or footer, loading for skeletons, error for error boundaries, and route for APIs.
+---
 
-layout	.js .jsx .tsx	Layout
-page	.js .jsx .tsx	Page
-loading	.js .jsx .tsx	Loading UI
-not-found	.js .jsx .tsx	Not found UI
-error	.js .jsx .tsx	Error UI
-global-error	.js .jsx .tsx	Global error UI
-route	.js .ts	API endpoint
-template	.js .jsx .tsx	Re-rendered layout
-default	.js .jsx .tsx	Parallel route fallback page
+## Routing Files
 
-Nested routes
-Folders define URL segments. Nesting folders nests segments. Layouts at any level wrap their child segments. A route becomes public when a page or route file exists.
+Special filenames that Next.js recognises inside the `app` directory:
 
-Path	URL pattern	Notes
-app/layout.tsx	—	Root layout wraps all routes
-app/blog/layout.tsx	—	Wraps /blog and descendants
-app/page.tsx	/	Public route
-app/blog/page.tsx	/blog	Public route
-app/blog/authors/page.tsx	/blog/authors	Public route
+| File | Extensions | Purpose |
+|------|-----------|---------|
+| `layout` | `.js .jsx .tsx` | Shared UI wrapper (persists across navigation) |
+| `page` | `.js .jsx .tsx` | Page UI — makes a route public |
+| `loading` | `.js .jsx .tsx` | Skeleton / suspense boundary |
+| `error` | `.js .jsx .tsx` | Error boundary for a segment |
+| `global-error` | `.js .jsx .tsx` | Root-level error boundary |
+| `not-found` | `.js .jsx .tsx` | 404 UI |
+| `route` | `.js .ts` | API endpoint |
+| `template` | `.js .jsx .tsx` | Like a layout, but re-renders on navigation |
+| `default` | `.js .jsx .tsx` | Parallel route fallback |
 
-Dynamic routes
-Parameterize segments with square brackets. Use [segment] for a single param, [...segment] for catch‑all, and [[...segment]] for optional catch‑all. Access values via the params prop.
+---
 
-Path	URL pattern
-app/blog/[slug]/page.tsx	/blog/my-first-post
-app/shop/[...slug]/page.tsx	/shop/clothing, /shop/clothing/shirts
-app/docs/[[...slug]]/page.tsx	/docs, /docs/layouts-and-pages, /docs/api-reference/use-router
+## Routing Concepts
 
+### Nested Routes
 
-Organizing your project
-Next.js is unopinionated about how you organize and colocate your project files. But it does provide several features to help you organize your project.
+Folders define URL segments. Nesting folders nests URL segments. A route becomes publicly accessible when a `page` or `route` file exists inside it.
 
-Component hierarchy
-The components defined in special files are rendered in a specific hierarchy:
+| Path | URL | Notes |
+|------|-----|-------|
+| `app/layout.tsx` | — | Root layout, wraps everything |
+| `app/page.tsx` | `/` | Home page |
+| `app/blog/layout.tsx` | — | Wraps `/blog` and all descendants |
+| `app/blog/page.tsx` | `/blog` | Blog index |
+| `app/blog/authors/page.tsx` | `/blog/authors` | Authors page |
 
-layout.js
-template.js
-error.js (React error boundary)
-loading.js (React suspense boundary)
-not-found.js (React error boundary for "not found" UI)
-page.js or nested layout.js
+### Dynamic Routes
 
-![alt text](image.png)
+Parameterise segments with square brackets.
 
+| Path | Matches |
+|------|---------|
+| `app/blog/[slug]/page.tsx` | `/blog/my-first-post` |
+| `app/shop/[...slug]/page.tsx` | `/shop/clothing`, `/shop/clothing/shirts` |
+| `app/docs/[[...slug]]/page.tsx` | `/docs`, `/docs/getting-started`, `/docs/api/hooks` |
 
-The components are rendered recursively in nested routes, meaning the components of a route segment will be nested inside the components of its parent segment.
+Access the value via the `params` prop — it is a `Promise` in Next.js 15+:
 
-![alt text](image-1.png)
+```tsx
+export default async function Page({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params
+  return <h1>{slug}</h1>
+}
+```
 
+---
 
+## Component Hierarchy
 
-Layouts and Pages
-Creating a page
-A page is UI that is rendered on a specific route. To create a page, add a page file inside the app directory and default export a React component. For example, to create an index page (/):
+Special files in a segment are rendered in this fixed order (outermost → innermost):
 
-app/page.tsx
+1. `layout.js`
+2. `template.js`
+3. `error.js` *(error boundary)*
+4. `loading.js` *(suspense boundary)*
+5. `not-found.js`
+6. `page.js` or a nested `layout.js`
+
+In nested routes each segment's component tree wraps inside its parent's.
+
+![Component hierarchy](image.png)
+![Nested hierarchy](image-1.png)
+
+---
+
+## Pages and Layouts
+
+### Creating a Page
+
+Add a `page.tsx` inside any folder and default-export a React component.
+
+```tsx
+// app/page.tsx
 export default function Page() {
   return <h1>Hello Next.js!</h1>
 }
+```
 
-Creating a layout
-A layout is UI that is shared between multiple pages. On navigation, layouts preserve state, remain interactive, and do not rerender.
+### Creating a Layout
 
-You can define a layout by default exporting a React component from a layout file. The component should accept a children prop which can be a page or another layout.
+Default-export a component that accepts a `children` prop. Layouts preserve state and do **not** re-render on navigation.
 
-For example, to create a layout that accepts your index page as child, add a layout file inside the app directory:
-export default function DashboardLayout({
-  children,
-}: {
-  children: React.ReactNode
-}) {
+```tsx
+// app/layout.tsx
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
       <body>
-        {/* Layout UI */}
-        {/* Place children where you want to render a page or nested layout */}
         <main>{children}</main>
       </body>
     </html>
   )
 }
+```
 
-Creating a nested route
+### Nesting Layouts
 
-A nested route is a route composed of multiple URL segments. For example, the /blog/[slug] route is composed of three segments:
+Add a `layout.tsx` inside a route folder to scope it to that segment and its children.
 
-/ (Root Segment)
-blog (Segment)
-[slug] (Leaf Segment)
+![Nested layouts](image-4.png)
 
-Folders are used to define the route segments that map to URL segments.
-Files (like page and layout) are used to create UI that is shown for a segment.
-![alt text](image-2.png)
+### Creating a Nested Route
 
-app/blog/page.tsx
-// Dummy imports
+A URL like `/blog/my-post` is made of three segments:
+
+- `/` — root segment
+- `blog` — segment
+- `[slug]` — leaf (dynamic) segment
+
+```
+app/
+  blog/
+    [slug]/
+      page.tsx   →  /blog/my-post
+```
+
+![Nested route diagram](image-2.png)
+
+```tsx
+// app/blog/page.tsx
 import { getPosts } from '@/lib/posts'
 import { Post } from '@/ui/post'
- 
+
 export default async function Page() {
   const posts = await getPosts()
- 
   return (
     <ul>
       {posts.map((post) => (
@@ -129,26 +157,18 @@ export default async function Page() {
     </ul>
   )
 }
+```
 
-![alt text](image-3.png)
+![Nested route result](image-3.png)
 
-Nesting layouts
+---
 
-By default, layouts in the folder hierarchy are also nested, which means they wrap child layouts via their children prop. You can nest layouts by adding layout inside specific route segments (folders).
+## Search Params
 
-For example, to create a layout for the /blog route, add a new layout file inside the blog folder.
+Access query-string values (`?key=value`) via the `searchParams` prop on Server Component pages.
 
-![alt text](image-4.png)
-
-Creating a dynamic segment
-app/blog/[slug]/page.tsx
-
-
-Rendering with search params
-In a Server Component page, you can access search parameters using the searchParams prop:
-
-app/page.tsx
-
+```tsx
+// app/page.tsx
 export default async function Page({
   searchParams,
 }: {
@@ -156,21 +176,46 @@ export default async function Page({
 }) {
   const filters = (await searchParams).filters
 }
+```
 
+### Using Both `params` and `searchParams`
 
-Linking between pages
+```tsx
+// app/post/[id]/page.tsx
+export default async function PostInfo({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ id: number }>
+  searchParams: Promise<{ name: string; email: string }>
+}) {
+  const { id } = await params
+  const { name, email } = await searchParams
 
-You can use the <Link> component to navigate between routes. <Link> is a built-in Next.js component that extends the HTML <a> tag to provide prefetching and client-side navigation.
+  return (
+    <div>
+      <p>ID: {id}</p>
+      <p>Name: {name}</p>
+      <p>Email: {email}</p>
+    </div>
+  )
+}
+```
 
-For example, to generate a list of blog posts, import <Link> from next/link and pass a href prop to the component:
+> `searchParams` is only available on **page** components — not layouts.
 
-app/ui/post.tsx
+---
 
+## Linking Between Pages
+
+Use the built-in `<Link>` component for client-side navigation with prefetching.
+
+```tsx
+// app/ui/post.tsx
 import Link from 'next/link'
- 
+
 export default async function Post({ post }) {
   const posts = await getPosts()
- 
   return (
     <ul>
       {posts.map((post) => (
@@ -181,3 +226,34 @@ export default async function Post({ post }) {
     </ul>
   )
 }
+```
+
+---
+
+## Route Prop Helpers
+
+Next.js ships utility types that infer `params` and named slots from your route structure.
+
+**`PageProps`** — for page components:
+
+```tsx
+// app/blog/[slug]/page.tsx
+export default async function Page(props: PageProps<'/blog/[slug]'>) {
+  const { slug } = await props.params
+  return <h1>Blog post: {slug}</h1>
+}
+```
+
+**`LayoutProps`** — for layout components:
+
+```tsx
+// app/dashboard/layout.tsx
+export default function Layout(props: LayoutProps<'/dashboard'>) {
+  return (
+    <section>
+      {props.children}
+      {/* Typed parallel-route slot: {props.analytics} */}
+    </section>
+  )
+}
+```
