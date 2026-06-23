@@ -257,3 +257,70 @@ export default function Layout(props: LayoutProps<'/dashboard'>) {
   )
 }
 ```
+
+---
+
+## Linking and Navigating
+
+In Next.js, routes are rendered on the server by default. Next.js comes with built-in prefetching, streaming, and client-side transitions to keep navigation fast and responsive.
+
+### How Navigation Works
+
+Navigation relies on four key concepts:
+
+1. **Server Rendering** — page UI is generated on the server
+2. **Prefetching** — routes are loaded in the background before the user navigates
+3. **Streaming** — the server sends parts of a page as they're ready
+4. **Client-side transitions** — the browser updates only what changed, without a full reload
+
+### Server Rendering
+
+Layouts and Pages are React Server Components by default. The Server Component Payload is generated on the server on every navigation.
+
+- **Prerendering** — happens at build time or during revalidation; result is cached
+- **Dynamic Rendering** — happens at request time in response to a client request
+
+### Prefetching
+
+`<Link>` prefetches routes automatically; a plain `<a>` tag does not.
+
+```tsx
+{/* Prefetched when the link enters the viewport or is hovered */}
+<Link href="/blog">Blog</Link>
+
+{/* No prefetching */}
+<a href="/contact">Contact</a>
+```
+
+How much is prefetched depends on the route type:
+
+| Route type | Prefetch behaviour |
+|------------|-------------------|
+| Static | Full route is prefetched |
+| Dynamic | Skipped, or partially prefetched if `loading.tsx` is present |
+
+![Prefetching diagram](image-5.png)
+
+### Streaming
+
+Streaming lets the server send parts of a dynamic route to the client as soon as they're ready, so users see content sooner rather than waiting for the full page.
+
+For dynamic routes, shared layouts and loading skeletons can be prefetched ahead of time.
+
+![Streaming diagram](image-6.png)
+
+To enable streaming, add a `loading.tsx` in your route folder:
+
+```
+app/
+  blog/
+    loading.tsx   ← shown instantly while the page streams in
+    page.tsx
+```
+
+### Client-Side Transitions
+
+Instead of a full page reload, Next.js:
+
+- Keeps shared layouts and UI intact
+- Replaces only the current page with the prefetched loading state or new page
