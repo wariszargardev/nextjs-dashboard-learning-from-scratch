@@ -38,3 +38,11 @@ app/blog/layout.tsx	—	Wraps /blog and descendants
 app/page.tsx	/	Public route
 app/blog/page.tsx	/blog	Public route
 app/blog/authors/page.tsx	/blog/authors	Public route
+
+Dynamic routes
+Parameterize segments with square brackets. Use [segment] for a single param, [...segment] for catch‑all, and [[...segment]] for optional catch‑all. Access values via the params prop.
+
+Path	URL pattern
+app/blog/[slug]/page.tsx	/blog/my-first-post
+app/shop/[...slug]/page.tsx	/shop/clothing, /shop/clothing/shirts
+app/docs/[[...slug]]/page.tsx	/docs, /docs/layouts-and-pages, /docs/api-reference/use-router
