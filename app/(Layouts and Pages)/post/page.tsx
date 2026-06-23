@@ -39,7 +39,7 @@ export default function Post(){
             <h1>Post Page</h1>
             <ul>
                 {posts.map(post => (
-                    <li key={post.id}> <Link href={'/post/'+ post.id}> {post.name}</Link> </li>
+                    <li key={post.id}> <Link href={`post/${post.id}?name=${post.name}&email=${post.email}`}> {post.name}</Link> </li>
                 ))}
             </ul>
         </div>
