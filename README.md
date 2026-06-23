@@ -46,3 +46,24 @@ Path	URL pattern
 app/blog/[slug]/page.tsx	/blog/my-first-post
 app/shop/[...slug]/page.tsx	/shop/clothing, /shop/clothing/shirts
 app/docs/[[...slug]]/page.tsx	/docs, /docs/layouts-and-pages, /docs/api-reference/use-router
+
+
+Organizing your project
+Next.js is unopinionated about how you organize and colocate your project files. But it does provide several features to help you organize your project.
+
+Component hierarchy
+The components defined in special files are rendered in a specific hierarchy:
+
+layout.js
+template.js
+error.js (React error boundary)
+loading.js (React suspense boundary)
+not-found.js (React error boundary for "not found" UI)
+page.js or nested layout.js
+
+![alt text](image.png)
+
+
+The components are rendered recursively in nested routes, meaning the components of a route segment will be nested inside the components of its parent segment.
+
+![alt text](image-1.png)
