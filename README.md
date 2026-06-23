@@ -16,21 +16,25 @@ bun dev
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Routing Files
+Add page to expose a route, layout for shared UI such as header, nav, or footer, loading for skeletons, error for error boundaries, and route for APIs.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+layout	.js .jsx .tsx	Layout
+page	.js .jsx .tsx	Page
+loading	.js .jsx .tsx	Loading UI
+not-found	.js .jsx .tsx	Not found UI
+error	.js .jsx .tsx	Error UI
+global-error	.js .jsx .tsx	Global error UI
+route	.js .ts	API endpoint
+template	.js .jsx .tsx	Re-rendered layout
+default	.js .jsx .tsx	Parallel route fallback page
 
-## Learn More
+Nested routes
+Folders define URL segments. Nesting folders nests segments. Layouts at any level wrap their child segments. A route becomes public when a page or route file exists.
 
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Path	URL pattern	Notes
+app/layout.tsx	—	Root layout wraps all routes
+app/blog/layout.tsx	—	Wraps /blog and descendants
+app/page.tsx	/	Public route
+app/blog/page.tsx	/blog	Public route
+app/blog/authors/page.tsx	/blog/authors	Public route
