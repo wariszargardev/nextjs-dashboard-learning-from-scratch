@@ -1,8 +1,8 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Next.js Dashboard — Learning from Scratch
 
 ## Getting Started
 
-First, run the development server:
+Run the development server:
 
 ```bash
 npm run dev
@@ -14,23 +14,63 @@ pnpm dev
 bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000) in your browser to see the result.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+---
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Folder Structure
 
-## Learn More
+![Folder structure](image.png)
 
-To learn more about Next.js, take a look at the following resources:
+| Path | Description |
+|------|-------------|
+| `/app` | All routes, components, and logic — this is where you'll work most |
+| `/app/lib` | Reusable utility functions and data-fetching functions |
+| `/app/ui` | UI components (cards, tables, forms) — pre-styled to save time |
+| `/public` | Static assets such as images |
+| `next.config.ts` | Config files at the root, created and pre-configured by `create-next-app` |
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+---
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Placeholder Data
 
-## Deploy on Vercel
+Placeholder data lives in [`app/lib/placeholder-data.ts`](app/lib/placeholder-data.ts). Each JavaScript object represents a database table. For example, the invoices table:
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+```ts
+const invoices = [
+  {
+    customer_id: customers[0].id,
+    amount: 15795,
+    status: 'pending',
+    date: '2022-12-06',
+  },
+  {
+    customer_id: customers[1].id,
+    amount: 20348,
+    status: 'pending',
+    date: '2022-11-14',
+  },
+  // ...
+];
+```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+---
+
+## TypeScript
+
+Most files use a `.ts` or `.tsx` extension — the project is written in TypeScript to reflect the modern web landscape.
+
+Type definitions live in [`app/lib/definitions.ts`](app/lib/definitions.ts). For example:
+
+```ts
+export type Invoice = {
+  id: string;
+  customer_id: string;
+  amount: number;
+  date: string;
+  // String union type — status can only be 'pending' or 'paid'
+  status: 'pending' | 'paid';
+};
+```
+
+TypeScript prevents accidentally passing the wrong data format — for example, a `string` where `amount` expects a `number`.
