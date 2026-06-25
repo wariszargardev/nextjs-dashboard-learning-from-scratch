@@ -101,3 +101,8 @@ CSS Modules allow you to scope CSS to a component by automatically creating uniq
 We'll continue using Tailwind in this course, but let's take a moment to see how you can achieve the same results from the quiz above using CSS modules.
 Inside /app/ui, create a new file called home.module.css and add the following CSS rules:
 
+
+
+Chapter 3
+
+Optimizing Fonts and Images
