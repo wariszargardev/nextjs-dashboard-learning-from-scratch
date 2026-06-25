@@ -17,8 +17,19 @@ bun dev
 Open [http://localhost:3000](http://localhost:3000) in your browser to see the result.
 
 ---
-Chapter 1
-## Folder Structure
+
+## Table of Contents
+
+- [Chapter 1 — Project Structure](#chapter-1--project-structure)
+- [Chapter 2 — CSS Styling](#chapter-2--css-styling)
+- [Chapter 3 — Optimizing Fonts & Images](#chapter-3--optimizing-fonts--images)
+- [Chapter 4 — Creating Layouts and Pages](#chapter-4--creating-layouts-and-pages)
+
+---
+
+## Chapter 1 — Project Structure
+
+### Folder Layout
 
 ![Folder structure](image.png)
 
@@ -28,11 +39,9 @@ Chapter 1
 | `/app/lib` | Reusable utility functions and data-fetching functions |
 | `/app/ui` | UI components (cards, tables, forms) — pre-styled to save time |
 | `/public` | Static assets such as images |
-| `next.config.ts` | Config files at the root, created and pre-configured by `create-next-app` |
+| `next.config.ts` | Root config file, created and pre-configured by `create-next-app` |
 
----
-
-## Placeholder Data
+### Placeholder Data
 
 Placeholder data lives in [`app/lib/placeholder-data.ts`](app/lib/placeholder-data.ts). Each JavaScript object represents a database table. For example, the invoices table:
 
@@ -54,9 +63,7 @@ const invoices = [
 ];
 ```
 
----
-
-## TypeScript
+### TypeScript
 
 Most files use a `.ts` or `.tsx` extension — the project is written in TypeScript to reflect the modern web landscape.
 
@@ -75,68 +82,77 @@ export type Invoice = {
 
 TypeScript prevents accidentally passing the wrong data format — for example, a `string` where `amount` expects a `number`.
 
+---
 
-Chapter 2
+## Chapter 2 — CSS Styling
 
-CSS Styling
+### Global Styles
 
-Global styles
+Inside [`/app/ui/global.css`](app/ui/global.css) you can add CSS rules that apply to all routes — CSS resets, site-wide element styles, and more.
 
-If you look inside the /app/ui folder, you'll see a file called global.css. You can use this file to add CSS rules to all the routes in your application - such as CSS reset rules, site-wide styles for HTML elements like links, and more.
+Import it once at the top-level component. In Next.js that is the root layout:
 
-You can import global.css in any component in your application, but it's usually good practice to add it to your top-level component. In Next.js, this is the root layout (more on this later).
-
-/app/layout.tsx
-
+```ts
+// app/layout.tsx
 import '@/app/ui/global.css';
+```
 
-Tailwind
-Tailwind is a CSS framework that speeds up the development process by allowing you to quickly write utility classes directly in your React code.
+### Tailwind
 
+Tailwind is a utility-first CSS framework that lets you style directly in JSX:
+
+```tsx
 <h1 className="text-blue-500">I'm blue!</h1>
+```
 
-CSS Modules
-CSS Modules allow you to scope CSS to a component by automatically creating unique class names, so you don't have to worry about style collisions as well.
+### CSS Modules
 
-We'll continue using Tailwind in this course, but let's take a moment to see how you can achieve the same results from the quiz above using CSS modules.
-Inside /app/ui, create a new file called home.module.css and add the following CSS rules:
+CSS Modules scope styles to a single component by auto-generating unique class names, eliminating style collisions.
 
+To try it, create `/app/ui/home.module.css` and import it in the component where you need it. Both approaches (Tailwind and CSS Modules) produce the same result — this course continues with Tailwind.
 
+---
 
-Chapter 3
+## Chapter 3 — Optimizing Fonts & Images
 
-Optimizing Fonts and Images
+### Why Optimize Fonts?
 
-Why optimize fonts?
+Custom fonts can hurt performance if fetched at runtime. Next.js solves this with the `next/font` module — it downloads font files at **build time** and hosts them alongside your static assets, so there are zero extra network requests when a user visits the app.
 
-Fonts play a significant role in the design of a website, but using custom fonts in your project can affect performance if the font files need to be fetched and loaded.
+### Why Optimize Images?
 
-Next.js automatically optimizes fonts in the application when you use the next/font module. It downloads font files at build time and hosts them with your other static assets. This means when a user visits your application, there are no additional network requests for fonts which would impact performance.
+Next.js serves static assets from the top-level `/public` folder. A plain `<img>` tag works, but has no built-in optimizations:
 
-Why optimize images?
-
-Next.js can serve static assets, like images, under the top-level /public folder. Files inside /public can be referenced in your application.
-
-With regular HTML, you would add an image as follows:
-
+```html
 <img
   src="/hero.png"
   alt="Screenshots of the dashboard project showing desktop version"
 />
+```
 
-The <Image> component
-The <Image> Component is an extension of the HTML <img> tag, and comes with automatic image optimization, such as:
+### The `<Image>` Component
 
-Preventing layout shift automatically when images are loading.
-Resizing images to avoid shipping large images to devices with a smaller viewport.
-Lazy loading images by default (images load as they enter the viewport).
-Serving images in modern formats, like WebP and AVIF, when the browser supports it.
+`<Image>` extends the native `<img>` tag with automatic optimizations:
 
-Nested routing
-Next.js uses file-system routing where folders are used to create nested routes. Each folder represents a route segment that maps to a URL segment.
+- Prevents layout shift while images load
+- Resizes images to match the device viewport
+- Lazy-loads images by default (loads when entering the viewport)
+- Serves modern formats (WebP, AVIF) when the browser supports them
 
-![alt text](image-1.png)
+---
 
-You can create separate UIs for each route using layout.tsx and page.tsx files.
+## Chapter 4 — Creating Layouts and Pages
 
-![alt text](image-2.png)
+### Nested Routing
+
+Next.js uses **file-system routing** — folders map directly to URL segments.
+
+![Nested routing diagram](image-1.png)
+
+Each route can have its own `layout.tsx` and `page.tsx`:
+
+![Layout and page files](image-2.png)
+
+**Partial rendering** means only the `page.tsx` re-renders on navigation — the shared `layout.tsx` stays mounted, preserving client-side React state.
+
+![Partial rendering diagram](image-3.png)
