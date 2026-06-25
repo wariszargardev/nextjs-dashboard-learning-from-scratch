@@ -156,3 +156,26 @@ Each route can have its own `layout.tsx` and `page.tsx`:
 **Partial rendering** means only the `page.tsx` re-renders on navigation — the shared `layout.tsx` stays mounted, preserving client-side React state.
 
 ![Partial rendering diagram](image-3.png)
+
+Chapter 5
+
+Navigating Between Pages
+In the previous chapter, you created the dashboard layout and pages. Now, let's add some links to allow users to navigate between the dashboard routes.
+
+To link between pages, you'd traditionally use the <a> HTML element. At the moment, the sidebar links use <a> elements, but notice what happens when you navigate between the home, invoices, and customers pages on your browser.
+
+Did you see it?
+
+There's a full page refresh on each page navigation!
+
+The <Link> component
+
+In Next.js, you can use the <Link /> Component to link between pages in your application. <Link> allows you to do client-side navigation with JavaScript.
+
+To use the <Link /> component, open /app/ui/dashboard/nav-links.tsx, and import the Link component from next/link. Then, replace the <a> tag with <Link>:
+
+Pattern: Showing active links
+A common UI pattern is to show an active link to indicate to the user what page they are currently on. To do this, you need to get the user's current path from the URL. Next.js provides a hook called usePathname() that you can use to check the path and implement this pattern.
+
+Since usePathname() is a React hook, you'll need to turn nav-links.tsx into a Client Component. Add React's "use client" directive to the top of the file, then import usePathname() from next/navigation:
+
