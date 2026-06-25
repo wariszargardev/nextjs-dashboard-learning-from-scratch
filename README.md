@@ -131,3 +131,12 @@ Preventing layout shift automatically when images are loading.
 Resizing images to avoid shipping large images to devices with a smaller viewport.
 Lazy loading images by default (images load as they enter the viewport).
 Serving images in modern formats, like WebP and AVIF, when the browser supports it.
+
+Nested routing
+Next.js uses file-system routing where folders are used to create nested routes. Each folder represents a route segment that maps to a URL segment.
+
+![alt text](image-1.png)
+
+You can create separate UIs for each route using layout.tsx and page.tsx files.
+
+![alt text](image-2.png)
