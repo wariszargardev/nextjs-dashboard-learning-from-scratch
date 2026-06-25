@@ -106,3 +106,28 @@ Inside /app/ui, create a new file called home.module.css and add the following C
 Chapter 3
 
 Optimizing Fonts and Images
+
+Why optimize fonts?
+
+Fonts play a significant role in the design of a website, but using custom fonts in your project can affect performance if the font files need to be fetched and loaded.
+
+Next.js automatically optimizes fonts in the application when you use the next/font module. It downloads font files at build time and hosts them with your other static assets. This means when a user visits your application, there are no additional network requests for fonts which would impact performance.
+
+Why optimize images?
+
+Next.js can serve static assets, like images, under the top-level /public folder. Files inside /public can be referenced in your application.
+
+With regular HTML, you would add an image as follows:
+
+<img
+  src="/hero.png"
+  alt="Screenshots of the dashboard project showing desktop version"
+/>
+
+The <Image> component
+The <Image> Component is an extension of the HTML <img> tag, and comes with automatic image optimization, such as:
+
+Preventing layout shift automatically when images are loading.
+Resizing images to avoid shipping large images to devices with a smaller viewport.
+Lazy loading images by default (images load as they enter the viewport).
+Serving images in modern formats, like WebP and AVIF, when the browser supports it.
