@@ -203,3 +203,12 @@ const pathname = usePathname();
 
 > `usePathname()` is a React hook, so the component must be a **Client Component** — add `'use client'` at the top of `nav-links.tsx`.
 
+Chapter 6
+
+Setting Up Your Database
+1- First push code in github
+2- Create vercel account
+3- from hoiby plan create new app 
+4- imoprt github repostory 
+5- Select repo for deployment
+6- Configure project & deploy
