@@ -218,3 +218,13 @@ Setting Up Your Database
 10 - option al if .env.local is not gemrated (vercel env pull .env.local) 
 11- .env.local => .env replace 
 12- .gitignore ma .env and vercel fodler add kr dain ga 
+
+
+
+<!-- PRisma setup -->
+pnpm install -D prisma
+pnpm add @prisma/client
+pnpm prisma init (initial basic sutrutcre )
+update .env url in of db
+pnpm prisma generate (will genearte prisma client isnide app fodler)
+npx prisma push db (all schema into db)
