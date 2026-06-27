@@ -226,6 +226,6 @@ pnpm install -D prisma
 pnpm add @prisma/client
 pnpm prisma init (initial basic sutrutcre )
 update .env url in of db
-pnpm prisma generate (will genearte prisma client isnide app fodler)
+npx prisma generate (will genearte prisma client isnide app fodler)
 npx prisma push db (all schema into db) if already sync will show (The database is already in sync with the Prisma schema.)
 npx prisma studio (will open replicate of datase schemo and will creat user or us)
