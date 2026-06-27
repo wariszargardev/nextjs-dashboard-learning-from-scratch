@@ -212,3 +212,9 @@ Setting Up Your Database
 4- imoprt github repostory 
 5- Select repo for deployment
 6- Configure project & deploy
+7- Stroage sa new database propstgres select kra g
+8- npm i -g vercel@latest
+9- vercel link )it will auto creat .env.local from vercel and add token 
+10 - option al if .env.local is not gemrated (vercel env pull .env.local) 
+11- .env.local => .env replace 
+12- .gitignore ma .env and vercel fodler add kr dain ga 
