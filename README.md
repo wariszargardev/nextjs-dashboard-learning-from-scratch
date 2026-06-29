@@ -24,6 +24,8 @@ Open [http://localhost:3000](http://localhost:3000) in your browser to see the r
 - [Chapter 2 — CSS Styling](#chapter-2--css-styling)
 - [Chapter 3 — Optimizing Fonts & Images](#chapter-3--optimizing-fonts--images)
 - [Chapter 4 — Creating Layouts and Pages](#chapter-4--creating-layouts-and-pages)
+- [Chapter 5 — Navigating Between Pages](#chapter-5--navigating-between-pages)
+- [Chapter 6 — Setting Up Your Database](#chapter-6--setting-up-your-database)
 
 ---
 
@@ -53,12 +55,6 @@ const invoices = [
     status: 'pending',
     date: '2022-12-06',
   },
-  {
-    customer_id: customers[1].id,
-    amount: 20348,
-    status: 'pending',
-    date: '2022-11-14',
-  },
   // ...
 ];
 ```
@@ -75,8 +71,7 @@ export type Invoice = {
   customer_id: string;
   amount: number;
   date: string;
-  // String union type — status can only be 'pending' or 'paid'
-  status: 'pending' | 'paid';
+  status: 'pending' | 'paid'; // string union type
 };
 ```
 
@@ -157,25 +152,110 @@ Each route can have its own `layout.tsx` and `page.tsx`:
 
 ![Partial rendering diagram](image-3.png)
 
-Chapter 5
+---
 
-Navigating Between Pages
-In the previous chapter, you created the dashboard layout and pages. Now, let's add some links to allow users to navigate between the dashboard routes.
+## Chapter 5 — Navigating Between Pages
 
-To link between pages, you'd traditionally use the <a> HTML element. At the moment, the sidebar links use <a> elements, but notice what happens when you navigate between the home, invoices, and customers pages on your browser.
+In the previous chapter you created the dashboard layout and pages. Now let's add links so users can navigate between routes.
 
-Did you see it?
+### Why Not `<a>` Tags?
 
-There's a full page refresh on each page navigation!
+The standard `<a>` element triggers a **full page refresh** on every navigation — even between pages that share the same layout. You can observe this in the sidebar if it currently uses `<a>` elements.
 
-The <Link> component
+### The `<Link>` Component
 
-In Next.js, you can use the <Link /> Component to link between pages in your application. <Link> allows you to do client-side navigation with JavaScript.
+Next.js provides `<Link />` for client-side navigation without a full reload. Replace `<a>` tags in [`/app/ui/dashboard/nav-links.tsx`](app/ui/dashboard/nav-links.tsx):
 
-To use the <Link /> component, open /app/ui/dashboard/nav-links.tsx, and import the Link component from next/link. Then, replace the <a> tag with <Link>:
+```tsx
+import Link from 'next/link';
 
-Pattern: Showing active links
-A common UI pattern is to show an active link to indicate to the user what page they are currently on. To do this, you need to get the user's current path from the URL. Next.js provides a hook called usePathname() that you can use to check the path and implement this pattern.
+// before
+<a href="/dashboard/invoices">Invoices</a>
 
-Since usePathname() is a React hook, you'll need to turn nav-links.tsx into a Client Component. Add React's "use client" directive to the top of the file, then import usePathname() from next/navigation:
+// after
+<Link href="/dashboard/invoices">Invoices</Link>
+```
 
+### Pattern: Active Link Highlighting
+
+A common UI pattern is highlighting the link that matches the current page. Use the `usePathname()` hook from Next.js to read the current URL path:
+
+```tsx
+'use client';
+
+import { usePathname } from 'next/navigation';
+
+const pathname = usePathname();
+
+<Link
+  href={link.href}
+  className={pathname === link.href ? 'bg-sky-100 text-blue-600' : ''}
+>
+  {link.name}
+</Link>
+```
+
+> `usePathname()` is a React hook, so the component must be a **Client Component** — add `'use client'` at the top of `nav-links.tsx`.
+
+---
+
+## Chapter 6 — Setting Up Your Database
+
+### 1. Deploy to Vercel
+
+1. Push your code to a GitHub repository.
+2. Create a [Vercel](https://vercel.com) account.
+3. From the Vercel dashboard, click **Add New Project**.
+4. Import your GitHub repository.
+5. Select the repo and click **Deploy**.
+
+### 2. Create a Postgres Database
+
+1. In Vercel, go to the **Storage** tab and create a new **Postgres** database.
+2. Copy the connection string provided by Vercel.
+
+### 3. Link the Database Locally
+
+Install the Vercel CLI and link your project so it pulls environment variables automatically:
+
+```bash
+npm i -g vercel@latest
+vercel link
+```
+
+If `.env.local` wasn't generated automatically, pull it manually:
+
+```bash
+vercel env pull .env.local
+```
+
+Rename `.env.local` to `.env` so Prisma can read it, then add both `.env` and the `.vercel` folder to `.gitignore`:
+
+```
+.env
+.vercel
+```
+
+### 4. Set Up Prisma
+
+Install Prisma and the client:
+
+```bash
+pnpm install -D prisma
+pnpm add @prisma/client
+```
+
+Initialize Prisma (creates `prisma/schema.prisma` and `.env`):
+
+```bash
+pnpm prisma init
+```
+
+Update the `DATABASE_URL` in `.env` with your Postgres connection string, then run:
+
+| Command | What it does |
+|---------|--------------|
+| `npx prisma generate` | Generates the Prisma Client inside the `app` folder |
+| `npx prisma db push` | Pushes your schema to the database |
+| `npx prisma studio` | Opens a visual UI to browse and edit your data |
+| `npx prisma db push --force-reset` | Drops and recreates all tables (fresh start) |
