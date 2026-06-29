@@ -12,19 +12,45 @@ datasource db {
   provider = "postgresql"
 }
 
-model User { 
-  id    Int     @id @default(autoincrement()) 
-  email String  @unique
-  name  String?
-  posts Post[]
-  createdAt DateTime @default(now())
-} 
+enum InvoiceStatus {
+  pending
+  paid
+}
 
-model Post { 
-  id        Int     @id @default(autoincrement()) 
-  title     String
-  content   String?
-  published Boolean @default(false) 
-  authorId  Int
-  author    User    @relation(fields: [authorId], references: [id]) 
+model User {
+  id        Int      @id @default(autoincrement())
+  name      String
+  email     String   @unique
+  password  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Customer {
+  id        Int       @id @default(autoincrement())
+  name      String
+  email     String    @unique
+  imageUrl  String
+  invoices  Invoice[]
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+}
+
+model Invoice {
+  id         Int           @id @default(autoincrement())
+  amount     Int
+  date       DateTime
+  status     InvoiceStatus
+  customerId Int
+  customer   Customer      @relation(fields: [customerId], references: [id])
+  createdAt  DateTime      @default(now())
+  updatedAt  DateTime      @updatedAt
+}
+
+model Revenue {
+  id        Int      @id @default(autoincrement())
+  month     String   @unique
+  revenue   Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }

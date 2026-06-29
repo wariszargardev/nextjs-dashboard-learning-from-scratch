@@ -25,6 +25,7 @@ Open [http://localhost:3000](http://localhost:3000) in your browser to see the r
 - [Chapter 3 — Optimizing Fonts & Images](#chapter-3--optimizing-fonts--images)
 - [Chapter 4 — Creating Layouts and Pages](#chapter-4--creating-layouts-and-pages)
 - [Chapter 5 — Navigating Between Pages](#chapter-5--navigating-between-pages)
+- [Chapter 6 — Setting Up Your Database](#chapter-6--setting-up-your-database)
 
 ---
 
@@ -54,12 +55,6 @@ const invoices = [
     status: 'pending',
     date: '2022-12-06',
   },
-  {
-    customer_id: customers[1].id,
-    amount: 20348,
-    status: 'pending',
-    date: '2022-11-14',
-  },
   // ...
 ];
 ```
@@ -76,8 +71,7 @@ export type Invoice = {
   customer_id: string;
   amount: number;
   date: string;
-  // String union type — status can only be 'pending' or 'paid'
-  status: 'pending' | 'paid';
+  status: 'pending' | 'paid'; // string union type
 };
 ```
 
@@ -203,29 +197,65 @@ const pathname = usePathname();
 
 > `usePathname()` is a React hook, so the component must be a **Client Component** — add `'use client'` at the top of `nav-links.tsx`.
 
-Chapter 6
+---
 
-Setting Up Your Database
-1- First push code in github
-2- Create vercel account
-3- from hoiby plan create new app 
-4- imoprt github repostory 
-5- Select repo for deployment
-6- Configure project & deploy
-7- Stroage sa new database propstgres select kra g
-8- npm i -g vercel@latest
-9- vercel link )it will auto creat .env.local from vercel and add token 
-10 - option al if .env.local is not gemrated (vercel env pull .env.local) 
-11- .env.local => .env replace 
-12- .gitignore ma .env and vercel fodler add kr dain ga 
+## Chapter 6 — Setting Up Your Database
 
+### 1. Deploy to Vercel
 
+1. Push your code to a GitHub repository.
+2. Create a [Vercel](https://vercel.com) account.
+3. From the Vercel dashboard, click **Add New Project**.
+4. Import your GitHub repository.
+5. Select the repo and click **Deploy**.
 
-<!-- PRisma setup -->
+### 2. Create a Postgres Database
+
+1. In Vercel, go to the **Storage** tab and create a new **Postgres** database.
+2. Copy the connection string provided by Vercel.
+
+### 3. Link the Database Locally
+
+Install the Vercel CLI and link your project so it pulls environment variables automatically:
+
+```bash
+npm i -g vercel@latest
+vercel link
+```
+
+If `.env.local` wasn't generated automatically, pull it manually:
+
+```bash
+vercel env pull .env.local
+```
+
+Rename `.env.local` to `.env` so Prisma can read it, then add both `.env` and the `.vercel` folder to `.gitignore`:
+
+```
+.env
+.vercel
+```
+
+### 4. Set Up Prisma
+
+Install Prisma and the client:
+
+```bash
 pnpm install -D prisma
 pnpm add @prisma/client
-pnpm prisma init (initial basic sutrutcre )
-update .env url in of db
-npx prisma generate (will genearte prisma client isnide app fodler)
-npx prisma push db (all schema into db) if already sync will show (The database is already in sync with the Prisma schema.)
-npx prisma studio (will open replicate of datase schemo and will creat user or us)
+```
+
+Initialize Prisma (creates `prisma/schema.prisma` and `.env`):
+
+```bash
+pnpm prisma init
+```
+
+Update the `DATABASE_URL` in `.env` with your Postgres connection string, then run:
+
+| Command | What it does |
+|---------|--------------|
+| `npx prisma generate` | Generates the Prisma Client inside the `app` folder |
+| `npx prisma db push` | Pushes your schema to the database |
+| `npx prisma studio` | Opens a visual UI to browse and edit your data |
+| `npx prisma db push --force-reset` | Drops and recreates all tables (fresh start) |
