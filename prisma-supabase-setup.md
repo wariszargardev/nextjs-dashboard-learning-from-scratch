@@ -81,3 +81,10 @@ Opens at `localhost:5555` to browse your data.
 
 - **Wrong port** — use `5432`, not `6543` for `DATABASE_URL`
 - **Special characters in password** — URL-encode them (e.g. `@` → `%40`, `#` → `%23`)
+
+| Command | What it does |
+|---------|--------------|
+| `npx prisma generate` | Generates the Prisma Client inside the `app` folder |
+| `npx prisma db push` | Pushes your schema to the database |
+| `npx prisma studio` | Opens a visual UI to browse and edit your data |
+| `npx prisma db push --force-reset` | Drops and recreates all tables (fresh start) |
