@@ -77,8 +77,6 @@ Opens at `localhost:5555` to browse your data.
 
 ---
 
----
-
 ## Multi-file Schema (One file per model, like Laravel)
 
 Prisma 5.15+ supports `prismaSchemaFolder` — split models into separate `.prisma` files.
@@ -89,7 +87,8 @@ Prisma 5.15+ supports `prismaSchemaFolder` — split models into separate `.pris
 prisma/
 ├── schema/
 │   ├── base.prisma        ← generator + datasource
-│   ├── user.prisma        ← User model + Role enum
+│   ├── enums.prisma       ← all enums in one place
+│   ├── user.prisma        ← User model
 │   ├── post.prisma        ← Post model
 │   └── comment.prisma     ← Comment model
 ```
@@ -109,7 +108,9 @@ datasource db {
 }
 ```
 
-### user.prisma
+### enums.prisma — central enum file
+
+All enums live here. Add new ones as your app grows.
 
 ```prisma
 enum Role {
@@ -117,6 +118,16 @@ enum Role {
   ADMIN
 }
 
+enum PostStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+```
+
+### user.prisma
+
+```prisma
 model User {
   id        String    @id @default(cuid())
   name      String
@@ -152,7 +163,7 @@ model Post {
 
 ```prisma
 model Comment {
-  id        String   @id @default(cuid())
+  id        String   @id @default(cuid()
   content   String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -165,6 +176,26 @@ model Comment {
 }
 ```
 
+### Auto-loading — no imports needed
+
+Prisma merges all `.prisma` files in the folder before compiling. Every model and enum is automatically visible to every other file — just use them directly:
+
+```prisma
+// user.prisma — Role is defined in enums.prisma, no import needed
+model User {
+  role Role @default(USER)
+}
+
+// post.prisma — User is defined in user.prisma, no import needed
+model Post {
+  author User @relation(...)
+}
+```
+
+> Same concept as Laravel's autoloader — define once anywhere, use everywhere. Prisma only cares that everything is valid when merged together, not which file each piece came from.
+>
+> **One rule:** each enum or model name must be defined in exactly one file — duplicate names across files will throw an error.
+
 ### package.json — set schema folder so all Prisma commands work without flags
 
 ```json
@@ -174,14 +205,13 @@ model Comment {
 }
 ```
 
-Then run normally:
+Then all commands work normally — no `--schema` flag needed:
 
 ```bash
 npx prisma migrate dev --name init
 npx prisma studio
+npx prisma db seed
 ```
-
-> Relations cross files freely — `Post` can reference `User` even from a different file. Prisma merges all `.prisma` files before validating.
 
 ---
 
@@ -202,3 +232,30 @@ npx prisma studio
 
 - **Wrong port** — use `5432`, not `6543` for `DATABASE_URL`
 - **Special characters in password** — URL-encode them (e.g. `@` → `%40`, `#` → `%23`)
+
+---
+
+## ID Strategies (`@default`)
+
+`cuid()` auto-generates a unique string ID for every new record — similar to Laravel's `uuid()` but a different format.
+
+### Options
+
+| Option | Example output | Notes |
+|---|---|---|
+| `@default(cuid())` | `clh7qz8x40000356mxyz12abc` | Prisma default, URL-safe, sortable |
+| `@default(uuid())` | `550e8400-e29b-41d4-a716-446655440000` | Standard UUID v4, familiar from Laravel |
+| `@default(autoincrement())` | `1`, `2`, `3` | Integer IDs, like Laravel's default |
+
+### Which to use
+
+- **`cuid()`** — good default, stick with it if you have no preference
+- **`uuid()`** — if you're coming from Laravel and want familiar IDs
+- **`autoincrement()`** — only if you need integer IDs (e.g. legacy systems)
+
+### How to switch
+
+```prisma
+id String @id @default(uuid())   // UUID
+id Int    @id @default(autoincrement())  // Integer
+```
