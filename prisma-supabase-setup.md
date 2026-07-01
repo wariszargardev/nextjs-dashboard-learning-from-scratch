@@ -365,6 +365,7 @@ npx prisma generate
 npx prisma migrate dev --name init
 
 # New column on existing model
+# This single command will create migration and push in db
 npx prisma migrate dev --name add_col_to_model
 
 # New .prisma file / model

@@ -7,4 +7,5 @@ model User{
     updatedAt DateTime  @updatedAt
 
     posts Post[]
+    comments Comment[]
 }
