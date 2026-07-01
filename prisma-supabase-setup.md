@@ -259,3 +259,115 @@ npx prisma db seed
 id String @id @default(uuid())   // UUID
 id Int    @id @default(autoincrement())  // Integer
 ```
+
+---
+
+## Migration Commands — Complete Reference
+
+### New Project (first time setup)
+
+```bash
+npx prisma migrate dev --name init
+```
+- Creates `prisma/migrations/` folder
+- Generates first SQL migration file
+- Applies it to the DB
+- Runs `prisma generate` automatically
+
+---
+
+### Existing Project — Added new column to existing model
+
+```prisma
+// post.prisma — added slug column
+model Post {
+  id    String @id @default(cuid())
+  slug  String @unique   // ← new column
+  title String
+}
+```
+
+```bash
+npx prisma migrate dev --name add_slug_to_post
+```
+- Detects the diff from last migration
+- Creates a new SQL file for just the new column
+- Applies it to DB
+- Runs `prisma generate` automatically
+
+---
+
+### Existing Project — Added a brand new `.prisma` file (new model)
+
+```bash
+npx prisma migrate dev --name add_category_model
+```
+Same command — Prisma detects the new model and generates the `CREATE TABLE` SQL for it.
+
+---
+
+### Quick push (dev/prototyping only — no migration files)
+
+```bash
+npx prisma db push
+```
+- Syncs schema directly to DB
+- Does **not** create migration files
+- Good for early development, **not for production**
+
+---
+
+### Reset everything (drop all tables and re-migrate from scratch)
+
+```bash
+npx prisma migrate reset
+```
+- Drops all tables
+- Re-runs all migrations from the beginning
+- Runs seed automatically if configured
+- **Destructive — never run in production**
+
+---
+
+### Apply migrations in production (no interactive prompts)
+
+```bash
+npx prisma migrate deploy
+```
+- Applies any pending migrations
+- Does **not** create new migrations
+- Safe for CI/CD and production deployments
+
+---
+
+### Check migration status
+
+```bash
+npx prisma migrate status
+```
+- Shows which migrations have been applied and which are pending
+
+---
+
+### Regenerate Prisma Client after any schema change
+
+```bash
+npx prisma generate
+```
+- Run this if you pushed schema changes manually or pulled a schema update from git
+- `migrate dev` runs this automatically, but `db push` does not always
+
+---
+
+### Summary table
+
+| Scenario | Command |
+|---|---|
+| New project, first migration | `prisma migrate dev --name init` |
+| Added column to existing model | `prisma migrate dev --name add_col_to_model` |
+| Added new `.prisma` file / model | `prisma migrate dev --name add_model_name` |
+| Quick sync without migration files | `prisma db push` |
+| Drop all tables and start fresh | `prisma migrate reset` |
+| Deploy pending migrations to production | `prisma migrate deploy` |
+| Check pending migrations | `prisma migrate status` |
+| Refresh Prisma Client types | `prisma generate` |
