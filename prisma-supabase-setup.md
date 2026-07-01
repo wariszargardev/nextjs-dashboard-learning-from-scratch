@@ -363,44 +363,330 @@ npx prisma generate
 
 | Scenario | Command |
 |---|---|
-| New project (first setup) | `npx prisma migrate dev --name init` |
-| New column on existing model | `npx prisma migrate dev --name add_col_to_model` |
-| New `.prisma` file / model | `npx prisma migrate dev --name add_model_name` |
-| Quick dev push (no migration files) | `npx prisma db push` |
-| Reset everything (destructive) | `npx prisma migrate reset` |
-| Production deploy | `npx prisma migrate deploy` |
-| Check migration status | `npx prisma migrate status` |
-| Refresh Prisma Client | `npx prisma generate` |
-
-> `npx prisma migrate dev --name add_col_to_model` does both — it creates the migration **and** applies it to the DB in one step.
+| New project, first migration | `prisma migrate dev --name init` |
+| Added column to existing model | `prisma migrate dev --name add_col_to_model` |
+| Added new `.prisma` file / model | `prisma migrate dev --name add_model_name` |
+| Quick sync without migration files | `prisma db push` |
+| Drop all tables and start fresh | `prisma migrate reset` |
+| Deploy pending migrations to production | `prisma migrate deploy` |
+| Check pending migrations | `prisma migrate status` |
+| Refresh Prisma Client types | `prisma generate` |
 
 ---
 
-### Shortcuts via `package.json` scripts
+## Seeder Structure (One file per model, like Laravel)
 
-Add these to `package.json` so every command below can be run with `pnpm` instead of `npx prisma ...`:
+### Folder structure
 
-```json
-"scripts": {
-  "dev": "next dev",
-  "build": "next build",
-  "start": "next start",
+```
+prisma/
+├── schema/
+│   ├── base.prisma
+│   ├── enums.prisma
+│   ├── user.prisma
+│   ├── post.prisma
+│   └── comment.prisma
+├── seed/
+│   ├── index.ts            ← main entry, calls all seeders in order
+│   ├── userSeeder.ts
+│   ├── postSeeder.ts
+│   └── commentSeeder.ts
+```
 
-  "db:migrate": "prisma migrate dev",
-  "db:push": "prisma db push",
-  "db:reset": "prisma migrate reset",
-  "db:deploy": "prisma migrate deploy",
-  "db:status": "prisma migrate status",
-  "db:generate": "prisma generate",
-  "db:studio": "prisma studio",
-  "db:seed": "prisma db seed"
+---
+
+### `prisma/seed/userSeeder.ts`
+
+```ts
+import { PrismaClient } from "@prisma/client";
+
+export async function userSeeder(prisma: PrismaClient) {
+  await prisma.user.deleteMany();
+
+  const admin = await prisma.user.create({
+    data: {
+      name: "Alice Admin",
+      email: "alice@example.com",
+      role: "ADMIN",
+    },
+  });
+
+  const regular = await prisma.user.create({
+    data: {
+      name: "Bob User",
+      email: "bob@example.com",
+      role: "USER",
+    },
+  });
+
+  console.log(`✅ Users seeded: ${admin.name}, ${regular.name}`);
+
+  return { admin, regular };
 }
 ```
 
-| Full command | Shortcut |
-|---|---|
-| `npx prisma migrate dev --name add_col_to_model` | `pnpm db:migrate --name add_col_to_model` |
-| `npx prisma db push` | `pnpm db:push` |
-| `npx prisma migrate reset` | `pnpm db:reset` |
-| `npx prisma migrate deploy` | `pnpm db:deploy` |
-| `npx prisma studio` | `pnpm db:studio` |
+---
+
+### `prisma/seed/postSeeder.ts`
+
+```ts
+import { PrismaClient, User } from "@prisma/client";
+
+export async function postSeeder(prisma: PrismaClient, admin: User) {
+  await prisma.post.deleteMany();
+
+  const post = await prisma.post.create({
+    data: {
+      title: "Getting Started with Next.js and Prisma",
+      content: "This is a sample post that demonstrates the blog-like architecture.",
+      published: true,
+      authorId: admin.id,
+    },
+  });
+
+  console.log(`✅ Posts seeded: "${post.title}"`);
+
+  return { post };
+}
+```
+
+---
+
+### `prisma/seed/commentSeeder.ts`
+
+```ts
+import { PrismaClient, User, Post } from "@prisma/client";
+
+export async function commentSeeder(
+  prisma: PrismaClient,
+  post: Post,
+  admin: User,
+  regular: User
+) {
+  await prisma.comment.deleteMany();
+
+  await prisma.comment.createMany({
+    data: [
+      {
+        content: "Great article! Very clear explanation.",
+        postId: post.id,
+        authorId: regular.id,
+      },
+      {
+        content: "Thanks for sharing – the repository pattern makes a lot of sense here.",
+        postId: post.id,
+        authorId: admin.id,
+      },
+    ],
+  });
+
+  console.log(`✅ Comments seeded`);
+}
+```
+
+---
+
+### `prisma/seed/index.ts`
+
+```ts
+import { PrismaClient } from "@prisma/client";
+import { userSeeder } from "./userSeeder";
+import { postSeeder } from "./postSeeder";
+import { commentSeeder } from "./commentSeeder";
+
+const prisma = new PrismaClient();
+
+async function main() {
+  console.log("🌱 Seeding database…");
+
+  // Order matters — children after parents
+  const { admin, regular } = await userSeeder(prisma);
+  const { post } = await postSeeder(prisma, admin);
+  await commentSeeder(prisma, post, admin, regular);
+
+  console.log("🎉 Seed complete.");
+}
+
+main()
+  .catch((e) => {
+    console.error("❌ Seed failed:", e);
+    process.exit(1);
+  })
+  .finally(async () => {
+    await prisma.$disconnect();
+  });
+```
+
+---
+
+### Update `package.json`
+
+```json
+"prisma": {
+  "schema": "prisma/schema",
+  "seed": "ts-node --compiler-options '{\"module\":\"CommonJS\"}' prisma/seed/index.ts"
+}
+```
+
+---
+
+## Complete Schema Reference
+
+### `prisma/schema/base.prisma`
+
+```prisma
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["prismaSchemaFolder"]
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+```
+
+---
+
+### `prisma/schema/enums.prisma`
+
+```prisma
+enum Role {
+  USER
+  ADMIN
+}
+
+enum PostStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+```
+
+---
+
+### `prisma/schema/user.prisma`
+
+```prisma
+model User {
+  id        String    @id @default(cuid())
+  name      String
+  email     String    @unique
+  role      Role      @default(USER)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  posts     Post[]
+  comments  Comment[]
+}
+```
+
+---
+
+### `prisma/schema/post.prisma`
+
+```prisma
+model Post {
+  id        String    @id @default(cuid())
+  title     String
+  content   String
+  published Boolean   @default(false)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  authorId  String
+  author    User      @relation(fields: [authorId], references: [id], onDelete: Cascade)
+
+  comments  Comment[]
+}
+```
+
+---
+
+### `prisma/schema/comment.prisma`
+
+```prisma
+model Comment {
+  id        String   @id @default(cuid())
+  content   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  postId    String
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  authorId  String
+  author    User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
+}
+```
+
+---
+
+## Complete `package.json` scripts
+
+```json
+{
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "db:migrate": "prisma migrate dev",
+    "db:push": "prisma db push",
+    "db:reset": "prisma migrate reset",
+    "db:deploy": "prisma migrate deploy",
+    "db:status": "prisma migrate status",
+    "db:generate": "prisma generate",
+    "db:studio": "prisma studio",
+    "db:seed": "prisma db seed"
+  },
+  "prisma": {
+    "schema": "prisma/schema",
+    "seed": "ts-node --compiler-options '{\"module\":\"CommonJS\"}' prisma/seed/index.ts"
+  }
+}
+```
+
+---
+
+## Complete Project Hierarchy
+
+```
+prisma/
+│
+├── schema/                          ← all .prisma files (multi-file schema)
+│   ├── base.prisma                  ← generator + datasource config
+│   ├── enums.prisma                 ← all enums (Role, PostStatus, etc.)
+│   │
+│   ├── user.prisma                  ← User model
+│   ├── post.prisma                  ← Post model (belongs to User)
+│   └── comment.prisma               ← Comment model (belongs to Post + User)
+│
+├── seed/                            ← all seeders (one per model)
+│   ├── index.ts                     ← main entry, runs all seeders in order
+│   ├── userSeeder.ts                ← seeds User table
+│   ├── postSeeder.ts                ← seeds Post table
+│   └── commentSeeder.ts             ← seeds Comment table
+│
+└── migrations/                      ← auto-generated by prisma migrate dev
+    ├── 20240101000000_init/
+    │   └── migration.sql
+    └── 20240102000000_add_slug/
+        └── migration.sql
+```
+
+### Model relationships at a glance
+
+```
+User
+ ├── has many → Post      (posts[])
+ └── has many → Comment   (comments[])
+
+Post
+ ├── belongs to → User    (authorId)
+ └── has many  → Comment  (comments[])
+
+Comment
+ ├── belongs to → Post    (postId)
+ └── belongs to → User    (authorId)
+```
