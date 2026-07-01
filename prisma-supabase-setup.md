@@ -361,13 +361,26 @@ npx prisma generate
 
 ### Summary table
 
-| Scenario | Command |
-|---|---|
-| New project, first migration | `prisma migrate dev --name init` |
-| Added column to existing model | `prisma migrate dev --name add_col_to_model` |
-| Added new `.prisma` file / model | `prisma migrate dev --name add_model_name` |
-| Quick sync without migration files | `prisma db push` |
-| Drop all tables and start fresh | `prisma migrate reset` |
-| Deploy pending migrations to production | `prisma migrate deploy` |
-| Check pending migrations | `prisma migrate status` |
-| Refresh Prisma Client types | `prisma generate` |
+# New project
+npx prisma migrate dev --name init
+
+# New column on existing model
+npx prisma migrate dev --name add_col_to_model
+
+# New .prisma file / model
+npx prisma migrate dev --name add_model_name
+
+# Quick dev push (no migration files)
+npx prisma db push
+
+# Reset everything (destructive)
+npx prisma migrate reset
+
+# Production deploy
+npx prisma migrate deploy
+
+# Check status
+npx prisma migrate status
+
+# Refresh Prisma Client
+npx prisma generate
