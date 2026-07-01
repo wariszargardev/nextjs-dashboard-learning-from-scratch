@@ -361,27 +361,46 @@ npx prisma generate
 
 ### Summary table
 
-# New project
-npx prisma migrate dev --name init
+| Scenario | Command |
+|---|---|
+| New project (first setup) | `npx prisma migrate dev --name init` |
+| New column on existing model | `npx prisma migrate dev --name add_col_to_model` |
+| New `.prisma` file / model | `npx prisma migrate dev --name add_model_name` |
+| Quick dev push (no migration files) | `npx prisma db push` |
+| Reset everything (destructive) | `npx prisma migrate reset` |
+| Production deploy | `npx prisma migrate deploy` |
+| Check migration status | `npx prisma migrate status` |
+| Refresh Prisma Client | `npx prisma generate` |
 
-# New column on existing model
-# This single command will create migration and push in db
-npx prisma migrate dev --name add_col_to_model
+> `npx prisma migrate dev --name add_col_to_model` does both — it creates the migration **and** applies it to the DB in one step.
 
-# New .prisma file / model
-npx prisma migrate dev --name add_model_name
+---
 
-# Quick dev push (no migration files)
-npx prisma db push
+### Shortcuts via `package.json` scripts
 
-# Reset everything (destructive)
-npx prisma migrate reset
+Add these to `package.json` so every command below can be run with `pnpm` instead of `npx prisma ...`:
 
-# Production deploy
-npx prisma migrate deploy
+```json
+"scripts": {
+  "dev": "next dev",
+  "build": "next build",
+  "start": "next start",
 
-# Check status
-npx prisma migrate status
+  "db:migrate": "prisma migrate dev",
+  "db:push": "prisma db push",
+  "db:reset": "prisma migrate reset",
+  "db:deploy": "prisma migrate deploy",
+  "db:status": "prisma migrate status",
+  "db:generate": "prisma generate",
+  "db:studio": "prisma studio",
+  "db:seed": "prisma db seed"
+}
+```
 
-# Refresh Prisma Client
-npx prisma generate
+| Full command | Shortcut |
+|---|---|
+| `npx prisma migrate dev --name add_col_to_model` | `pnpm db:migrate --name add_col_to_model` |
+| `npx prisma db push` | `pnpm db:push` |
+| `npx prisma migrate reset` | `pnpm db:reset` |
+| `npx prisma migrate deploy` | `pnpm db:deploy` |
+| `npx prisma studio` | `pnpm db:studio` |
