@@ -1,6 +1,6 @@
-import { PrismaClient } from "@/app/generated/prisma/client";
+import prisma from "@/lib/db/prisma";
 
-export async function userSeeder(prisma: PrismaClient) {
+export async function userSeeder() {
     await prisma.user.deleteMany();
 
     const admin = await prisma.user.create({
