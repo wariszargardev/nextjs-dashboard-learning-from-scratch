@@ -1,11 +1,10 @@
 import {NextRequest, NextResponse} from "next/server";
 import * as userService from "@/lib/services/userService";
 import { UserRole } from "@/lib/models/user";
- 
-// Next.js App Router passes dynamic route segments as `params`.
-type RouteContext = { params: { id: string } };
 
-export async function GET(_request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+type RouteContext = { params: Promise<{ id: string }> };
+
+export async function GET(_request: NextRequest, { params }: RouteContext) {
     try {
         const { id: userId } = await params;
 
@@ -31,7 +30,7 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
  
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: RouteContext
 ) {
 const { id: userId } = await params;
 
@@ -63,7 +62,7 @@ const { id: userId } = await params;
  
 export async function DELETE(
   _request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: RouteContext
 ) {
     const { id: userId } = await params;
 
