@@ -47,3 +47,25 @@ export async function createUser(input: {
   // Future: validate email format, check for existing user, hash password, etc.
   return userRepository.create(input);
 }
+
+ 
+/**
+ * Update an existing user.
+ * Returns null if the user doesn't exist.
+ */
+export async function updateUser(
+  id: string,
+  input: Partial<Pick<PublicUser, "name" | "email" | "role">>
+): Promise<PublicUser | null> {
+  // Future: validate that a new email isn't already taken.
+  return userRepository.update(id, input);
+}
+ 
+/**
+ * Delete a user by ID.
+ * Cascades to posts and comments via DB foreign keys.
+ */
+export async function deleteUser(id: string): Promise<void> {
+  return userRepository.deleteUser(id);
+}
+ 

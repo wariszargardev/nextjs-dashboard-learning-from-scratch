@@ -117,3 +117,7 @@ export async function update(
     select: PUBLIC_USER_SELECT,
   });
 }
+ 
+export async function deleteUser(id: string): Promise<void> {
+  await prisma.user.delete({ where: { id } });
+}

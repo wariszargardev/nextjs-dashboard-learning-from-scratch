@@ -23,8 +23,6 @@ export async function GET(request: NextRequest) {
   }
 }
 
-
-
 // ── POST /api/users ────────────────────────────────────────────────────────
  
 export async function POST(request: NextRequest) {
