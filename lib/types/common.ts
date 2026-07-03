@@ -1,6 +1,6 @@
 // lib/types/common.ts
 // ─────────────────────────────────────────────────────────────────────────────
-// Shared utility types used across repositories and services.
+// Shared utility types used across services.
 // ─────────────────────────────────────────────────────────────────────────────
 
 /**
@@ -8,7 +8,7 @@
  * Used as the return type for any list query.
  *
  * @example
- *   const result: PaginatedResult<UserListItem> = await userRepository.list(...)
+ *   const result: PaginatedResult<UserListItem> = await userService.listUsers(...)
  */
 export interface PaginatedResult<T> {
   data: T[];
@@ -19,8 +19,8 @@ export interface PaginatedResult<T> {
 }
 
 /**
- * Pagination input – passed into list() methods.
- * Both fields are optional; repositories apply sensible defaults (page=1, perPage=20).
+ * Pagination input – passed into list() functions.
+ * Both fields are optional; services apply sensible defaults (page=1, perPage=20).
  */
 export interface PaginationInput {
   page?: number;

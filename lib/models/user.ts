@@ -31,7 +31,7 @@ export interface UserListItem extends PublicUser {
 }
 
 /**
- * Filter shape accepted by userRepository.list() and userService.listUsers().
+ * Filter shape accepted by userService.listUsers().
  *
  * search – case-insensitive match on name OR email
  * role   – exact match on role enum value

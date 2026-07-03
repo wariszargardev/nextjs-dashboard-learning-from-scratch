@@ -1,6 +1,15 @@
 # Next.js + Prisma Architecture
 
-**Stack:** Next.js 14 (App Router) · TypeScript · Prisma ORM · PostgreSQL · pnpm
+**Stack:** Next.js 16 (App Router) · TypeScript · Prisma ORM · PostgreSQL
+
+This project uses a simple MVC-style structure:
+
+- **Model** – `lib/models/*.ts` (plus the Prisma schema) — the shape of the data.
+- **Service** – `lib/services/*.ts` — talks to Prisma and holds business logic. This is the *only* place that queries the database.
+- **Controller** – `lib/controllers/*.ts` — reads the HTTP request, does basic validation, calls a service function, and shapes the JSON response.
+- **Route** – `app/api/**/route.ts` — Next.js requires these files to export `GET`/`POST`/etc. They stay tiny: each one just forwards to the matching controller function. Think of this as the routing table, not where logic lives.
+
+There is no separate "repository" layer — the service talks to Prisma directly, since adding another layer in between just for a thin pass-through added confusion without real benefit at this project's size.
 
 ---
 
@@ -9,39 +18,32 @@
 ```
 .
 ├── prisma/
-│   ├── schema.prisma          # DB models, enums, relations
-│   ├── seed.ts                # Dev seed data
+│   ├── schema/                # DB models, enums, relations
+│   ├── seed/                  # Dev seed data
 │   └── migrations/            # Auto-generated SQL migrations
 │
 ├── lib/
 │   ├── db/
-│   │   └── prisma.ts          # PrismaClient singleton
+│   │   └── prisma.ts          # PrismaClient singleton (the actual DB connection)
 │   ├── types/
-│   │   └── common.ts          # PaginatedResult, PaginationInput, OrderInput
+│   │   └── common.ts          # Shared types: PaginatedResult, PaginationInput, OrderInput
 │   ├── models/
 │   │   ├── user.ts            # PublicUser, UserListItem, UserFilter
-│   │   ├── post.ts            # PublicPost, PostWithAuthor, PostFilter
-│   │   └── comment.ts         # PublicComment, CommentFilter
-│   ├── repositories/
-│   │   ├── userRepository.ts  # Prisma queries for User
-│   │   └── postRepository.ts  # Prisma queries for Post
+│   │   ├── post.ts            # Post-related types
+│   │   └── comment.ts         # Comment-related types
+│   ├── controllers/
+│   │   └── userController.ts  # Request handling for all /api/users routes
 │   └── services/
-│       ├── userService.ts     # Business logic for users
-│       └── postService.ts     # Business logic for posts
+│       └── userService.ts     # All user DB queries + business logic
 │
-├── app/
-│   ├── api/
-│   │   └── users/
-│   │       ├── route.ts       # GET /api/users, POST /api/users
-│   │       └── [id]/
-│   │           └── route.ts   # GET/PATCH/DELETE /api/users/:id
-│   └── users/
-│       ├── page.tsx           # /users – list + search + pagination
-│       └── [id]/
-│           └── page.tsx       # /users/:id – user detail
-│
-└── docs/
-    └── prisma-next-architecture.md   # this file
+└── app/
+    └── api/
+        └── users/
+            ├── route.ts        # GET /api/users, POST /api/users → userController
+            ├── by-email/
+            │   └── route.ts    # GET /api/users/by-email?email=... → userController
+            └── [id]/
+                └── route.ts    # GET/PATCH/DELETE /api/users/:id → userController
 ```
 
 ---
@@ -49,33 +51,22 @@
 ## Request Flow
 
 ```
-Browser / Client
-      │
-      ▼
-app/users/page.tsx          (Next.js Server Component)
-      │  calls
-      ▼
-lib/services/userService.ts  (business logic, validation)
-      │  calls
-      ▼
-lib/repositories/userRepository.ts  (Prisma queries, where/orderBy)
-      │  calls
-      ▼
-lib/db/prisma.ts             (PrismaClient singleton)
-      │  executes SQL
-      ▼
-PostgreSQL
-```
-
-For API routes the flow is identical, just with a different entry point:
-
-```
 HTTP request
       │
       ▼
-app/api/users/route.ts       (Next.js Route Handler)
-      │
-      ▼  (same as above)
+app/api/users/**/route.ts        (Route — forwards to the matching controller function)
+      │  calls
+      ▼
+lib/controllers/userController.ts (Controller — parses request, calls service, shapes response)
+      │  calls
+      ▼
+lib/services/userService.ts      (Service — business rules + Prisma queries)
+      │  calls
+      ▼
+lib/db/prisma.ts                 (PrismaClient singleton)
+      │  executes SQL
+      ▼
+PostgreSQL
 ```
 
 ---
@@ -84,11 +75,10 @@ app/api/users/route.ts       (Next.js Route Handler)
 
 | Layer | File pattern | Responsibility |
 |---|---|---|
-| **Models** | `lib/models/*.ts` | TypeScript shapes returned to callers; filter types |
-| **Repository** | `lib/repositories/*.ts` | Raw Prisma queries only; no business rules |
-| **Service** | `lib/services/*.ts` | Business logic; calls only repository, never Prisma directly |
-| **API Route** | `app/api/**/*.ts` | Parse request, call service, return JSON + status codes |
-| **Page** | `app/**/*.tsx` | Server Component; call service, render HTML |
+| **Model** | `lib/models/*.ts` | TypeScript shapes returned to callers; filter types |
+| **Service** | `lib/services/*.ts` | Business logic + Prisma queries — the only place the DB is touched |
+| **Controller** | `lib/controllers/*.ts` | Parse the request, validate input, call the service, return JSON + a status code |
+| **Route** | `app/api/**/route.ts` | Wire a URL + HTTP method to its controller function — no logic here |
 
 ---
 
@@ -96,31 +86,26 @@ app/api/users/route.ts       (Next.js Route Handler)
 
 ### User Listing (with search + pagination)
 
-1. `app/users/page.tsx` reads `searchParams.page` and `searchParams.search`.
-2. Calls `userService.listUsers({ page, perPage, search })`.
-3. Service calls `userRepository.list({ filter: { search }, ... })`.
-4. Repository builds a Prisma `where` with `OR [{ name: contains }, { email: contains }]`.
-5. Runs `prisma.user.count(where)` and `prisma.user.findMany(where, ...)` in parallel.
-6. Returns `PaginatedResult<UserListItem>` with `postsCount` from `_count.posts`.
-7. Page renders table rows + pagination links.
+1. `GET /api/users?search=...&page=...` hits `app/api/users/route.ts`, which forwards to `userController.getUsers()`.
+2. The controller reads the query params and calls `userService.listUsers({ page, perPage, search, role })`.
+3. `listUsers` builds a Prisma `where` clause (`OR [{ name: contains }, { email: contains }]`), then runs `prisma.user.count()` and `prisma.user.findMany()` in parallel.
+4. The controller wraps the result in `NextResponse.json(...)`.
 
 ### User Create
 
-1. `POST /api/users` handler reads `name`, `email`, `role?` from request body.
-2. Validates name/email, then calls `userService.createUser(input)`.
-3. Service delegates to `userRepository.create(input)`.
-4. Prisma inserts the row and returns the created user.
-5. Handler responds with `201 Created` + user JSON.
+1. `POST /api/users` forwards to `userController.createUser()`.
+2. The controller reads `name`, `email`, `role?` from the request body and validates them.
+3. Calls `userService.createUser(input)`, which runs `prisma.user.create(...)`.
+4. Responds with `201 Created` + the created user as JSON.
 
 ---
 
-## How to Extend (e.g. add Comments)
+## How to Extend (e.g. add Posts)
 
-1. **Model** – add `lib/models/comment.ts` (already done).
-2. **Repository** – add `lib/repositories/commentRepository.ts` with `list`, `create`, `delete`.
-3. **Service** – add `lib/services/commentService.ts`.
-4. **API** – add `app/api/posts/[postId]/comments/route.ts`.
-5. **Page** – render comments in `app/posts/[id]/page.tsx`.
+1. **Model** – add `lib/models/post.ts` (already scaffolded).
+2. **Service** – add `lib/services/postService.ts` with the Prisma queries + business logic for posts.
+3. **Controller** – add `lib/controllers/postController.ts` with the request-handling functions.
+4. **Route** – add `app/api/posts/route.ts` (and `[id]/route.ts`) that just forward to `postController`.
 
 ---
 
@@ -128,17 +113,17 @@ app/api/users/route.ts       (Next.js Route Handler)
 
 ```bash
 # Install deps
-pnpm install
+npm install
 
 # Set DATABASE_URL in .env (copy .env.example)
 cp .env.example .env
 
 # Create tables
-npx prisma migrate dev --name init
+npm run db:migrate
 
 # Seed sample data
-npx prisma db seed
+npm run db:seed
 
 # Run dev server
-pnpm dev
+npm run dev
 ```
