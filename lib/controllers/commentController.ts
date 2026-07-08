@@ -6,6 +6,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import * as commentService from "@/lib/services/commentService";
+import { logger } from "@/lib/logger";
 
 type RouteContext = { params: Promise<{ id: string }> };
 
@@ -23,20 +24,23 @@ export async function getComments(request: NextRequest) {
 
     return NextResponse.json(result);
   } catch (error) {
-    console.error("[GET /api/comments]", error);
+    logger.error("GET /api/comments", "Failed to list comments", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }
 
 // ── POST /api/comments ────────────────────────────────────────────────────────
 export async function createComment(request: NextRequest) {
+  let postId: string | undefined;
+  let authorId: string | undefined;
   try {
     const body = await request.json();
-    const { content, postId, authorId } = body as {
+    const { content } = body as {
       content?: string;
       postId?: string;
       authorId?: string;
     };
+    ({ postId, authorId } = body);
 
     // Basic validation
     if (!content || typeof content !== "string" || content.trim() === "") {
@@ -51,16 +55,18 @@ export async function createComment(request: NextRequest) {
 
     const comment = await commentService.createComment({ content: content.trim(), postId, authorId });
 
+    logger.info("POST /api/comments", "Comment created", { id: comment.id, postId, authorId });
     return NextResponse.json(comment, { status: 201 });
   } catch (error: any) {
     // Prisma foreign key violation – postId or authorId doesn't match a real record
     if (error?.code === "P2003") {
+      logger.warn("POST /api/comments", "Rejected unknown postId/authorId", { postId, authorId });
       return NextResponse.json(
         { error: "postId or authorId does not reference an existing record" },
         { status: 400 }
       );
     }
-    console.error("[POST /api/comments]", error);
+    logger.error("POST /api/comments", "Failed to create comment", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }
@@ -78,7 +84,7 @@ export async function getCommentById(_request: NextRequest, { params }: RouteCon
 
     return NextResponse.json(comment);
   } catch (error) {
-    console.error("Error fetching comment by ID:", error);
+    logger.error(`GET /api/comments/${commentId}`, "Failed to fetch comment", error);
     return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
   }
 }
@@ -97,9 +103,10 @@ export async function updateComment(request: NextRequest, { params }: RouteConte
       return NextResponse.json({ error: "Comment not found" }, { status: 404 });
     }
 
+    logger.info(`PATCH /api/comments/${commentId}`, "Comment updated", { id: commentId });
     return NextResponse.json(updated);
   } catch (error) {
-    console.error(`[PATCH /api/comments/${commentId}]`, error);
+    logger.error(`PATCH /api/comments/${commentId}`, "Failed to update comment", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }
@@ -110,13 +117,14 @@ export async function deleteComment(_request: NextRequest, { params }: RouteCont
 
   try {
     await commentService.deleteComment(commentId);
+    logger.info(`DELETE /api/comments/${commentId}`, "Comment deleted", { id: commentId });
     return new NextResponse(null, { status: 204 });
   } catch (error: any) {
     // Prisma record-not-found error
     if (error?.code === "P2025") {
       return NextResponse.json({ error: "Comment not found" }, { status: 404 });
     }
-    console.error(`[DELETE /api/comments/${commentId}]`, error);
+    logger.error(`DELETE /api/comments/${commentId}`, "Failed to delete comment", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }

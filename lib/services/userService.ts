@@ -151,3 +151,13 @@ export async function updateUser(
 export async function deleteUser(id: string): Promise<void> {
   await prisma.user.delete({ where: { id } });
 }
+
+/**
+ * Unpaginated list of every user, for author-picker dropdowns in the dashboard.
+ */
+export async function listAllUsers(): Promise<Pick<PublicUser, "id" | "name" | "email">[]> {
+  return prisma.user.findMany({
+    select: { id: true, name: true, email: true },
+    orderBy: { name: "asc" },
+  });
+}

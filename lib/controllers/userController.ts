@@ -15,6 +15,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import * as userService from "@/lib/services/userService";
 import { UserRole } from "@/lib/models/user";
+import { logger } from "@/lib/logger";
 
 // Params for routes like /api/users/[id] — Next.js passes these in as a Promise.
 type RouteContext = { params: Promise<{ id: string }> };
@@ -34,20 +35,22 @@ export async function getUsers(request: NextRequest) {
 
     return NextResponse.json(result);
   } catch (error) {
-    console.error("[GET /api/users]", error);
+    logger.error("GET /api/users", "Failed to list users", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }
 
 // ── POST /api/users ────────────────────────────────────────────────────────
 export async function createUser(request: NextRequest) {
+  let email: string | undefined;
   try {
     const body = await request.json();
-    const { name, email, role } = body as {
+    const { name, role } = body as {
       name?: string;
       email?: string;
       role?: UserRole;
     };
+    ({ email } = body);
 
     // Basic validation
     if (!name || typeof name !== "string" || name.trim() === "") {
@@ -59,13 +62,15 @@ export async function createUser(request: NextRequest) {
 
     const user = await userService.createUser({ name: name.trim(), email: email.trim(), role });
 
+    logger.info("POST /api/users", "User created", { id: user.id });
     return NextResponse.json(user, { status: 201 });
   } catch (error: any) {
     // Prisma unique constraint violation
     if (error?.code === "P2002") {
+      logger.warn("POST /api/users", "Rejected duplicate email", { email });
       return NextResponse.json({ error: "Email already in use" }, { status: 409 });
     }
-    console.error("[POST /api/users]", error);
+    logger.error("POST /api/users", "Failed to create user", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }
@@ -87,7 +92,7 @@ export async function getUserById(_request: NextRequest, { params }: RouteContex
 
     return NextResponse.json(user);
   } catch (error) {
-    console.error("Error fetching user by ID:", error);
+    logger.error(`GET /api/users/${userId}`, "Failed to fetch user", error);
     return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
   }
 }
@@ -95,14 +100,16 @@ export async function getUserById(_request: NextRequest, { params }: RouteContex
 // ── PATCH /api/users/:id ─────────────────────────────────────────────────────
 export async function updateUser(request: NextRequest, { params }: RouteContext) {
   const { id: userId } = await params;
+  let email: string | undefined;
 
   try {
     const body = await request.json();
-    const { name, email, role } = body as {
+    const { name, role } = body as {
       name?: string;
       email?: string;
       role?: UserRole;
     };
+    ({ email } = body);
 
     const updated = await userService.updateUser(userId, { name, email, role });
 
@@ -110,12 +117,14 @@ export async function updateUser(request: NextRequest, { params }: RouteContext)
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
+    logger.info(`PATCH /api/users/${userId}`, "User updated", { id: userId });
     return NextResponse.json(updated);
   } catch (error: any) {
     if (error?.code === "P2002") {
+      logger.warn(`PATCH /api/users/${userId}`, "Rejected duplicate email", { email });
       return NextResponse.json({ error: "Email already in use" }, { status: 409 });
     }
-    console.error(`[PATCH /api/users/${userId}]`, error);
+    logger.error(`PATCH /api/users/${userId}`, "Failed to update user", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }
@@ -126,13 +135,14 @@ export async function deleteUser(_request: NextRequest, { params }: RouteContext
 
   try {
     await userService.deleteUser(userId);
+    logger.info(`DELETE /api/users/${userId}`, "User deleted", { id: userId });
     return new NextResponse(null, { status: 204 });
   } catch (error: any) {
     // Prisma record-not-found error
     if (error?.code === "P2025") {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
-    console.error(`[DELETE /api/users/${userId}]`, error);
+    logger.error(`DELETE /api/users/${userId}`, "Failed to delete user", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }
@@ -153,7 +163,7 @@ export async function getUserByEmail(request: NextRequest) {
 
     return NextResponse.json(user);
   } catch (error) {
-    console.error("Error fetching user by email:", error);
+    logger.error("GET /api/users/by-email", "Failed to fetch user by email", error);
     return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
   }
 }

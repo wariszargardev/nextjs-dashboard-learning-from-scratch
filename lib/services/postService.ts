@@ -130,3 +130,13 @@ export async function updatePost(
 export async function deletePost(id: string): Promise<void> {
   await prisma.post.delete({ where: { id } });
 }
+
+/**
+ * Unpaginated list of every post, for post-picker dropdowns in the dashboard.
+ */
+export async function listAllPosts(): Promise<{ id: string; title: string }[]> {
+  return prisma.post.findMany({
+    select: { id: true, title: true },
+    orderBy: { title: "asc" },
+  });
+}

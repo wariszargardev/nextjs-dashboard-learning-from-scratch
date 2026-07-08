@@ -6,6 +6,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import * as postService from "@/lib/services/postService";
+import { logger } from "@/lib/logger";
 
 type RouteContext = { params: Promise<{ id: string }> };
 
@@ -25,21 +26,23 @@ export async function getPosts(request: NextRequest) {
 
     return NextResponse.json(result);
   } catch (error) {
-    console.error("[GET /api/posts]", error);
+    logger.error("GET /api/posts", "Failed to list posts", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }
 
 // ── POST /api/posts ──────────────────────────────────────────────────────────
 export async function createPost(request: NextRequest) {
+  let authorId: string | undefined;
   try {
     const body = await request.json();
-    const { title, content, published, authorId } = body as {
+    const { title, content, published } = body as {
       title?: string;
       content?: string;
       published?: boolean;
       authorId?: string;
     };
+    ({ authorId } = body);
 
     // Basic validation
     if (!title || typeof title !== "string" || title.trim() === "") {
@@ -59,13 +62,15 @@ export async function createPost(request: NextRequest) {
       authorId,
     });
 
+    logger.info("POST /api/posts", "Post created", { id: post.id, authorId });
     return NextResponse.json(post, { status: 201 });
   } catch (error: any) {
     // Prisma foreign key violation – authorId doesn't match a real user
     if (error?.code === "P2003") {
+      logger.warn("POST /api/posts", "Rejected unknown authorId", { authorId });
       return NextResponse.json({ error: "authorId does not reference an existing user" }, { status: 400 });
     }
-    console.error("[POST /api/posts]", error);
+    logger.error("POST /api/posts", "Failed to create post", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }
@@ -83,7 +88,7 @@ export async function getPostById(_request: NextRequest, { params }: RouteContex
 
     return NextResponse.json(post);
   } catch (error) {
-    console.error("Error fetching post by ID:", error);
+    logger.error(`GET /api/posts/${postId}`, "Failed to fetch post", error);
     return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
   }
 }
@@ -106,9 +111,10 @@ export async function updatePost(request: NextRequest, { params }: RouteContext)
       return NextResponse.json({ error: "Post not found" }, { status: 404 });
     }
 
+    logger.info(`PATCH /api/posts/${postId}`, "Post updated", { id: postId });
     return NextResponse.json(updated);
   } catch (error) {
-    console.error(`[PATCH /api/posts/${postId}]`, error);
+    logger.error(`PATCH /api/posts/${postId}`, "Failed to update post", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }
@@ -119,13 +125,14 @@ export async function deletePost(_request: NextRequest, { params }: RouteContext
 
   try {
     await postService.deletePost(postId);
+    logger.info(`DELETE /api/posts/${postId}`, "Post deleted", { id: postId });
     return new NextResponse(null, { status: 204 });
   } catch (error: any) {
     // Prisma record-not-found error
     if (error?.code === "P2025") {
       return NextResponse.json({ error: "Post not found" }, { status: 404 });
     }
-    console.error(`[DELETE /api/posts/${postId}]`, error);
+    logger.error(`DELETE /api/posts/${postId}`, "Failed to delete post", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }
