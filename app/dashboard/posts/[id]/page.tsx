@@ -4,6 +4,7 @@ import * as postService from "@/lib/services/postService";
 import * as commentService from "@/lib/services/commentService";
 import * as userService from "@/lib/services/userService";
 import { createCommentAction } from "@/lib/actions/commentActions";
+import { SubmitButton } from "@/components/ui/SubmitButton";
 
 export default async function PostDetailPage({
   params,
@@ -91,12 +92,12 @@ export default async function PostDetailPage({
             </select>
           </label>
 
-          <button
-            type="submit"
+          <SubmitButton
+            pendingLabel="Adding..."
             className="self-start rounded-md bg-foreground text-background px-4 py-2 text-sm font-medium"
           >
             Add comment
-          </button>
+          </SubmitButton>
         </form>
       )}
     </div>

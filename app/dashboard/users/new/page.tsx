@@ -1,4 +1,5 @@
 import { createUserAction } from "@/lib/actions/userActions";
+import { SubmitButton } from "@/components/ui/SubmitButton";
 
 export default async function NewUserPage({
   searchParams,
@@ -49,12 +50,12 @@ export default async function NewUserPage({
           </select>
         </label>
 
-        <button
-          type="submit"
+        <SubmitButton
+          pendingLabel="Creating..."
           className="mt-2 rounded-md bg-foreground text-background px-4 py-2 text-sm font-medium"
         >
           Create user
-        </button>
+        </SubmitButton>
       </form>
     </div>
   );

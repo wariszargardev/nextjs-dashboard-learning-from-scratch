@@ -1,5 +1,6 @@
 import { createPostAction } from "@/lib/actions/postActions";
 import * as userService from "@/lib/services/userService";
+import { SubmitButton } from "@/components/ui/SubmitButton";
 
 export default async function NewPostPage({
   searchParams,
@@ -64,12 +65,12 @@ export default async function NewPostPage({
             Published
           </label>
 
-          <button
-            type="submit"
+          <SubmitButton
+            pendingLabel="Creating..."
             className="mt-2 rounded-md bg-foreground text-background px-4 py-2 text-sm font-medium"
           >
             Create post
-          </button>
+          </SubmitButton>
         </form>
       )}
     </div>

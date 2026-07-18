@@ -1,6 +1,7 @@
 import { createCommentAction } from "@/lib/actions/commentActions";
 import * as userService from "@/lib/services/userService";
 import * as postService from "@/lib/services/postService";
+import { SubmitButton } from "@/components/ui/SubmitButton";
 
 export default async function NewCommentPage({
   searchParams,
@@ -71,12 +72,12 @@ export default async function NewCommentPage({
             />
           </label>
 
-          <button
-            type="submit"
+          <SubmitButton
+            pendingLabel="Adding..."
             className="mt-2 rounded-md bg-foreground text-background px-4 py-2 text-sm font-medium"
           >
             Add comment
-          </button>
+          </SubmitButton>
         </form>
       )}
     </div>
