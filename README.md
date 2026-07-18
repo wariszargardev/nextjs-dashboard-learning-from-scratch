@@ -20,6 +20,17 @@ You can start editing the page by modifying `app/page.tsx`. The page auto-update
 
 This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 
+## Prisma Queries Reference
+
+This project uses [Prisma](https://www.prisma.io/) for database access. See [`lib/db/queries.md`](lib/db/queries.md) for a reference of common query patterns used throughout the app, including:
+
+- Selecting all records or specific columns (`findMany`, `select`)
+- Unique and first-match lookups (`findUnique`, `findFirst`)
+- Combining conditions with `AND`, `OR`, and `NOT`
+- Filtering with `in` / `notIn`
+- Null checks
+- Date range filtering (`gte` / `lte`)
+
 ## Learn More
 
 To learn more about Next.js, take a look at the following resources:
