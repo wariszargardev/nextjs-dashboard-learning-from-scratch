@@ -488,3 +488,178 @@ const users = await prisma.user.findMany({
     }
 })
 ```
+
+## SELECT — deeply nested relations
+
+Fetches a single post along with its author, its comments, and each comment's author (only `id`/`name`) — relations nested three levels deep.
+
+```ts
+// post → comments → comment author
+const post = await prisma.post.findUnique({
+    where: { id: "clh7qz8x..." },
+    include: {
+        author: true,
+        comments: {
+            include: {
+                author: {
+                    select: {
+                        id: true,
+                        name: true,
+                    },
+                },
+            },
+        },
+    },
+});
+```
+
+## Count records
+
+`count()` returns the total number of rows. Adding `_count: true` in a `select` returns a count of all of that row's relations alongside the requested fields.
+
+```ts
+const userCount = await prisma.user.count({});
+
+const users = await prisma.user.findMany({
+    select: {
+        id: true,
+        name: true,
+        email: true,
+        _count: true // this will count all sub relations
+    }
+})
+```
+
+## SELECT — count relations
+
+Narrows `_count` to a specific relation, returning only the number of `posts` each user has instead of every relation.
+
+```ts
+const users = await prisma.user.findMany({
+    select: {
+        id: true,
+        name: true,
+        email: true,
+        _count: {
+            select: {
+                posts: true
+            }
+        }
+    }
+})
+```
+
+## Distinct
+
+Returns rows with unique values for the given field(s) — here, one row per distinct `role`.
+
+```ts
+const users = await prisma.user.findMany({
+    distinct: ['role'],
+    select: {
+        id: true,
+        name: true,
+        email: true,
+    }
+})
+```
+
+## Group by
+
+Groups rows by `role` and can be combined with aggregates (`_count`, `_sum`, etc.) to summarize each group.
+
+```ts
+const users = await prisma.user.groupBy({
+    by: ['role'],
+})
+```
+
+## Order by — single field
+
+Sorts users by `email` descending.
+
+```ts
+const users = await prisma.user.findMany({
+    orderBy: {
+        email: "desc",
+    }
+})
+```
+
+## Order by — multiple fields
+
+Sorts by `email` descending first, then by `id` ascending as a tiebreaker.
+
+```ts
+const users = await prisma.user.findMany({
+    orderBy: [
+        {
+            email: "desc",
+        },
+        {
+            id: 'asc'
+        }
+    ]
+})
+```
+
+## Pagination — skip + take (LIMIT + OFFSET)
+
+Skips the first `skip` rows and returns up to `take` rows after that — the standard offset-based pagination pattern.
+
+```ts
+const users = await prisma.user.findMany({
+    skip: 0,   // OFFSET
+    take: 20,  // LIMIT
+    orderBy: { createdAt: "desc" },
+});
+```
+
+## Pagination — with total pages
+
+Runs a count and a paginated `findMany` in a single `$transaction`, then derives the total number of pages from the total row count.
+
+```ts
+const perPage = 20;
+const page = 1;
+
+const [total, data] = await prisma.$transaction([
+    prisma.user.count(),
+    prisma.user.findMany({
+        skip: (page - 1) * perPage,
+        take: perPage,
+    }),
+]);
+
+const totalPages = Math.ceil(total / perPage);
+```
+
+## Check if a record exists
+
+Selects only `id` to check for existence as cheaply as possible, without fetching the rest of the row.
+
+```ts
+const exists = await prisma.user.findUnique({
+    where: { id: "clh7qz8x..." },
+    select: { id: true }, // fetch only id — fastest way
+});
+
+if (!exists) {
+    // not found
+}
+```
+
+## findUnique vs findFirst vs findMany
+
+Quick reference for which finder to use depending on the field being queried and the shape of result you need.
+
+```ts
+// findUnique  — only for @id or @unique fields
+const user = await prisma.user.findUnique({ where: { id: "..." } });
+
+// findFirst   — any field, returns first match or null
+const user = await prisma.user.findFirst({ where: { name: "John" } });
+
+// findMany    — any field, returns array (empty array if none found)
+const users = await prisma.user.findMany({ where: { role: "ADMIN" } });
+```

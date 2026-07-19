@@ -1,35 +1,16 @@
 import prisma from "@/lib/db/prisma"
 
 export default async function Queries() {
-    const users = await prisma.user.findMany({
-        select: {
-            id: true,
-            name: true,
-            posts: {
-                where: {
-                    published: true
-                },
-                select: {
-                    id: true,
-                    content: true
-                },
-                orderBy: {
-                    createdAt: 'desc'
-                },
-                take: 5
-            },
-            comments: {
-                select: {
-                    id: true,
-                    content: true
-                },
-                orderBy: {
-                    createdAt: 'desc'
-                },
-                take: 5
-            }
-        }
-    })
+const users = await prisma.user.findMany({
+    orderBy: [
+        {
+        email: "desc",
+    },
+    {
+        id: 'asc'
+    }
+    ]
+})
   return (
     <div className="p-6">
       <h1 className="text-xl font-bold mb-4">Users</h1>
