@@ -1,31 +1,28 @@
 // lib/db/prisma.ts
-// ─────────────────────────────────────────────────────────────────────────────
-// This is the single PrismaClient instance the whole app uses to talk to
-// PostgreSQL. Services (e.g. lib/services/userService.ts) import `prisma`
-// from here — nothing outside `lib` should import this directly.
-// ─────────────────────────────────────────────────────────────────────────────
-
 import { PrismaClient } from "@/app/generated/prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
+import pg from "pg";
 
-// In dev, Next.js reloads modules on every file change, which would normally
-// create a brand new PrismaClient (and DB connection) each time. Stashing it
-// on `global` re-uses the same client across reloads instead.
-const globalForPrisma = global as unknown as {
-    prisma: PrismaClient;
+// 1. Maintain strict typing on globalThis
+const globalForPrisma = globalThis as unknown as {
+    prisma?: PrismaClient;
+    adapter?: PrismaPg;
 };
 
-// The adapter is what actually connects to Postgres using DATABASE_URL.
-const adapter = new PrismaPg({
-    connectionString: process.env.DATABASE_URL,
-});
+// 2. Wrap initialization in a clean single-execution fallback
+if (!globalForPrisma.adapter) {
+    const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL });
+    globalForPrisma.adapter = new PrismaPg(pool);
+}
 
-const prisma =
-    globalForPrisma.prisma ||
-    new PrismaClient({
-        adapter,
+if (!globalForPrisma.prisma) {
+    globalForPrisma.prisma = new PrismaClient({
+        adapter: globalForPrisma.adapter,
     });
+}
 
-if (process.env.NODE_ENV !== "production") globalForPrisma.prisma = prisma;
+// 3. Export the cached single instances safely
+export const adapter = globalForPrisma.adapter;
+export const prisma = globalForPrisma.prisma;
 
 export default prisma;
