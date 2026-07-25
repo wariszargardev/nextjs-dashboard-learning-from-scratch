@@ -1,11 +1,34 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/db/prisma";
+
+// Get records
 export async function GET(request: NextRequest) {
     const {searchParams} = request.nextUrl
     const id = searchParams.get('id')
-    return NextResponse.json({ message: "Hello, world!", id });
+    const search = searchParams.get('search')
+    const role = searchParams.get('role')
+
+    const where = {
+        ...(search && {
+            OR: [
+                {
+                    name: {contains: search, mode: "insensitive" as const},
+                    email: {contains: search, mode: "insensitive" as const}
+                }
+            ]
+        }),
+        ...(role && {
+            role: role as "USER" | "ADMIN"
+        })
+    }
+
+    const users = await prisma.user.findMany({
+        where
+    })
+    return NextResponse.json({ message: "Hello, world!", id, search, users });
 }
 
+// Store validation
 export async function POST(request: NextRequest){
     try {
         const body = await request.json()
