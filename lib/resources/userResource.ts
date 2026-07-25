@@ -5,6 +5,12 @@ export function userResource(user:any){
         email:      user.email,
         role:       user.role,
         created_at: user.createdAt,
+
+        // conditional — only include if relation was loaded
+        ...(user._count && {
+            postCount: user._count.posts,
+            commentCount: user._count.comments
+        })
     }
 }
 

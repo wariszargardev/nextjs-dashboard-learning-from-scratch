@@ -82,40 +82,39 @@ export async function GET(request: NextRequest) {
 
 // Store validation
 export async function POST(request: NextRequest){
+    let email: string | undefined;
     try {
         const body = await request.json()
-        const {name, email, role} = body;
+        const {name, role, email} = body;
 
         // validation
-        if (!name || name.trim() === "") {
+        if (!name || typeof name !== "string" || name.trim() === "") {
             return NextResponse.json({ error: "name is required" }, { status: 400 });
         }
-        if (!email || !email.includes("@")) {
+        if (!email || typeof email !== "string" || !email.includes("@")) {
             return NextResponse.json({ error: "valid email is required" }, { status: 400 });
         }
-
-        const user =await prisma.user.create({
-            data: {
-                name,
-                email,
-                role
-            },
-            select: {
-                name: true,
-                email: true
-            }
-        })
-
-        if (user) {
-            return NextResponse.json({
-                message: "User created",
-                data: {
-                    user
-                }
-            })
+        if (role !== undefined && role !== "USER" && role !== "ADMIN") {
+            return NextResponse.json({ error: "role must be USER or ADMIN" }, { status: 400 });
         }
 
+        const user = await prisma.user.create({
+            data: {
+                name: name.trim(),
+                email: email.trim(),
+                role
+            },
+        })
+
+        return NextResponse.json({
+            message: "User created",
+            data: userResource(user)
+        }, { status: 201 });
+
     } catch (error:any) {
+        if (error?.code === "P2002") {
+            return NextResponse.json({ error: "Email already in use" }, { status: 409 });
+        }
         return NextResponse.json({ error: "Internal server error", errorMessage: error.message }, { status: 500 });
 
     }
