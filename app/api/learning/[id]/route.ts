@@ -44,5 +44,23 @@ export async function GET(req: NextRequest, { params }: RouteContext) {
         console.error(`[GET /api/learning/${id}]`, error);
         return NextResponse.json({ error: "Internal server error" }, { status: 500 });
     }
+}
 
+
+
+export async function DELETE(req: NextRequest, {params}: RouteContext) {
+    const {id}  = await params
+
+    try {
+        await prisma.user.delete({
+            where: {
+                id
+            }
+        })
+
+        return new NextResponse(null, { status: 204 });
+    } catch(error) {
+        console.error(`[DELETE /api/learning/${id}]`, error);
+        return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    }
 }
