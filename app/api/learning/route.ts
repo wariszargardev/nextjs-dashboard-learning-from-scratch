@@ -40,18 +40,18 @@ export async function GET(request: NextRequest) {
                 email: true,
                 role: true,
                 createdAt: true,
-                posts: {
-                    select: {
-                        id: true,
-                        title: true,
-                        comments: {
-                            select: {
-                                id: true,
-                                content: true,
-                            },
-                        },
-                    },
-                },
+                // posts: {
+                //     select: {
+                //         id: true,
+                //         title: true,
+                //         comments: {
+                //             select: {
+                //                 id: true,
+                //                 content: true,
+                //             },
+                //         },
+                //     },
+                // },
                 _count: {
                     select: {
                         posts: true,

@@ -1,4 +1,5 @@
 import prisma from "@/lib/db/prisma";
+import { userResource } from "@/lib/resources/userResource";
 import { NextResponse, NextRequest } from "next/server";
 
 type RouteContext = { params: Promise<{ id: string }> };
@@ -38,7 +39,7 @@ export async function GET(req: NextRequest, { params }: RouteContext) {
 
         return NextResponse.json({
             message: "User fetch successfully",
-            user
+            user: userResource(user)
         })
     } catch (error) {
         console.error(`[GET /api/learning/${id}]`, error);
@@ -79,7 +80,7 @@ export async function PUT(req: NextRequest, { params }: RouteContext) {
         }
     })
 
-    return NextResponse.json({ data: user });
+    return NextResponse.json({ data: userResource(user) });
 }
 
 export async function DELETE(req: NextRequest, {params}: RouteContext) {
