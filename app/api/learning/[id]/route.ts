@@ -46,7 +46,41 @@ export async function GET(req: NextRequest, { params }: RouteContext) {
     }
 }
 
+export async function PUT(req: NextRequest, { params }: RouteContext) {
+    const {id} = await params
+    const body = await req.json()
+    const {name, email, role} = body
 
+    const userExists  = await prisma.user.findUnique({
+        where: { id },
+        select: {id: true}
+    })
+
+    if (!userExists) {
+        return NextResponse.json({
+            error: "User not found"
+        })
+    }
+
+    const user = await prisma.user.update({
+        where: {
+            id
+        },
+        data: {
+            ...(name  && { name:  name.trim() }),
+            ...(email && { email: email.trim() }),
+            ...(role  && { role }),
+        },
+        select: {
+            id: true,
+            name: true,
+            email: true,
+            role: true
+        }
+    })
+
+    return NextResponse.json({ data: user });
+}
 
 export async function DELETE(req: NextRequest, {params}: RouteContext) {
     const {id}  = await params
