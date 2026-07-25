@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/db/prisma";
 import { userCollection, userResource } from "@/lib/resources/userResource";
+import { validateCreateUser } from "@/lib/validators/userValidator";
+import { validationErrorResponse } from "@/lib/validators/sendValidationError";
 // Get records
 export async function GET(request: NextRequest) {
     const { searchParams } = request.nextUrl;
@@ -40,18 +42,18 @@ export async function GET(request: NextRequest) {
                 email: true,
                 role: true,
                 createdAt: true,
-                // posts: {
-                //     select: {
-                //         id: true,
-                //         title: true,
-                //         comments: {
-                //             select: {
-                //                 id: true,
-                //                 content: true,
-                //             },
-                //         },
-                //     },
-                // },
+                posts: {
+                    select: {
+                        id: true,
+                        title: true,
+                        comments: {
+                            select: {
+                                id: true,
+                                content: true,
+                            },
+                        },
+                    },
+                },
                 _count: {
                     select: {
                         posts: true,
@@ -88,16 +90,11 @@ export async function POST(request: NextRequest){
         const {name, role, email} = body;
 
         // validation
-        if (!name || typeof name !== "string" || name.trim() === "") {
-            return NextResponse.json({ error: "name is required" }, { status: 400 });
+        const errors = validateCreateUser(body);
+        // like Laravel — if validation fails return 422
+        if (errors.length > 0) {
+            return validationErrorResponse(errors);
         }
-        if (!email || typeof email !== "string" || !email.includes("@")) {
-            return NextResponse.json({ error: "valid email is required" }, { status: 400 });
-        }
-        if (role !== undefined && role !== "USER" && role !== "ADMIN") {
-            return NextResponse.json({ error: "role must be USER or ADMIN" }, { status: 400 });
-        }
-
         const user = await prisma.user.create({
             data: {
                 name: name.trim(),
